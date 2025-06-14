@@ -1,0 +1,66 @@
+// src/components/AuthForm.jsx
+import { Link } from "react-router-dom";
+
+const AuthForm = ({ title, buttonText, onSubmit, isLogin }) => {
+  return (
+    <div className="w-screen h-screen bg-gradient-to-br from-indigo-100 via-white to-pink-100 flex items-center justify-center">
+      <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl">
+        <h2 className="text-3xl font-bold mb-6 text-center text-indigo-700">{title}</h2>
+
+        <form className="space-y-4" onSubmit={onSubmit}>
+          {!isLogin && (
+            <input
+              type="text"
+              placeholder="Full Name"
+              className="w-full px-4 py-2 bg-gray-900 text-white placeholder-gray-400 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              required
+            />
+          )}
+
+          <input
+            type="email"
+            placeholder="Email"
+            className="w-full px-4 py-2 bg-gray-900 text-white placeholder-gray-400 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            className="w-full px-4 py-2 bg-gray-900 text-white placeholder-gray-400 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            required
+          />
+
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition duration-200"
+            >
+              {buttonText}
+            </button>
+          </div>
+        </form>
+
+        <div className="mt-6 text-sm text-center text-gray-600">
+          {isLogin ? (
+            <>
+              Forgot your password?{" "}
+              <Link to="/register" className="text-indigo-600 hover:underline">
+                Register
+              </Link>
+            </>
+          ) : (
+            <>
+              Already have an account?{" "}
+              <Link to="/login" className="text-indigo-600 hover:underline">
+                Login
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AuthForm;
