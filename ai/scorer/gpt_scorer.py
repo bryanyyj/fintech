@@ -64,3 +64,5 @@ async def get_decision_score(text: str, monthly_spent: float, income: float, cat
             "fallback_score": 3 if high_spend_flag else 7,
             "fallback_tip": "Try to lower expenses before making new purchases."
         }
+
+##test
