@@ -48,7 +48,7 @@ const Login = () => {
             localStorage.setItem("userId", verifyData.userId);
           }
         }
-
+        alert("Logged in!");
         navigate("/"); // You can use navigate("/") if you're using React Router
       } else {
         alert(data.message)

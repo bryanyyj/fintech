@@ -144,7 +144,7 @@ export const login = (req, res, next) =>
         else {
             if (results.length == 0){
                 return res.status(404).json({
-                    message: "Email has not been registered yet"
+                    message: "Email not registered"
                 });
             }
             else {

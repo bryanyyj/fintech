@@ -45,6 +45,7 @@ const Register = () => {
 
       if (res.status === 200 && data.token) {
         localStorage.setItem("token", data.token);
+        alert("Registered!");
         navigate("/");
       } else {
         alert(data.message)
