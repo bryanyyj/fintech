@@ -67,30 +67,32 @@
 
 
 
+// src/components/AuthForm.jsx
+import { useState } from "react"
+import { Link } from "react-router-dom"
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
-
-const AuthForm = ({ title, buttonText, onSubmit, isLogin }) => {
+export default function AuthForm({ title, buttonText, onSubmit, isLogin }) {
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
     password: ""
-  });
+  })
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const handleChange = e => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  }
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(formData); // Pass formData to parent
-  };
+  const handleSubmit = e => {
+    e.preventDefault()
+    onSubmit(formData)
+  }
 
   return (
-    <div className="w-screen h-screen bg-gradient-to-br from-indigo-100 via-white to-pink-100 flex items-center justify-center">
+    <div className="w-screen h-screen bg-gradient-to-br from-indigo-100 via-white to-pink-100 flex items-center justify-center px-4">
       <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl">
-        <h2 className="text-3xl font-bold mb-6 text-center text-indigo-700">{title}</h2>
+        <h2 className="text-3xl font-bold mb-6 text-center text-indigo-700">
+          {title}
+        </h2>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           {!isLogin && (
@@ -138,7 +140,7 @@ const AuthForm = ({ title, buttonText, onSubmit, isLogin }) => {
         <div className="mt-6 text-sm text-center text-gray-600">
           {isLogin ? (
             <>
-              Forgot your password?{" "}
+              Don’t have an account?{" "}
               <Link to="/register" className="text-indigo-600 hover:underline">
                 Register
               </Link>
@@ -154,7 +156,5 @@ const AuthForm = ({ title, buttonText, onSubmit, isLogin }) => {
         </div>
       </div>
     </div>
-  );
-};
-
-export default AuthForm;
+  )
+}
