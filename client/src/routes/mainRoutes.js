@@ -4,14 +4,17 @@ const router = express.Router();
 // Import backend route handlers
 import login from './login.js';
 import register from './register.js';
+import decision from './analyze_decision.js';
 
 // Controllers and middleware
 import { preTokenGenerate, beforeSendToken, showTokenVerified, preCompare, showCompareSuccess, showHashing } from '../controllers/exampleController.js';
 import { generateToken, sendToken, verifyToken } from '../middlewares/jwtMiddleware.js';
 import { hashPassword, comparePassword } from '../middlewares/bcryptMiddleware.js';
 
+
 router.use("/login", login);
 router.use("/register", register);
+router.use("/analyze-decision", decision)
 
 // JWT and bcrypt routes
 router.post("/jwt/generate", preTokenGenerate, generateToken, beforeSendToken, sendToken);

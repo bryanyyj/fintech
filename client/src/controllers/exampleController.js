@@ -58,19 +58,10 @@ export const showHashing = (req, res, next) => {
 // REGISTER
 //////////////////////////////////////////////////////
 
-export const checkNameorEmail = (req, res, next) =>
+export const checkEmail = (req, res, next) =>
 {
     const data = {
-        full_name: req.body.full_name,
         email: req.body.email
-    }
-
-    if (req.body.full_name == undefined)
-    {
-        res.status(400).json({
-            message: "Error: Full Name is undefined"
-        });
-        return;
     }
 
     if (req.body.email == undefined)
@@ -91,13 +82,13 @@ export const checkNameorEmail = (req, res, next) =>
         }
         else {
             res.status(409).json({
-                message: "Provided Full Name or Email is already associated with another user"
+                message: "Provided Email is already associated with another user"
             });
             return;
         }
     }
 
-    model.checkNameorEmailExist(data, callback);
+    model.checkEmailExist(data, callback);
 }
 
 export const register = (req, res, next) =>
