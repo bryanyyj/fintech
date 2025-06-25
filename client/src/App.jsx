@@ -1,89 +1,52 @@
-// src/App.jsx
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-  Outlet,
-  useLocation
-} from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 
-import Login          from './pages/login.jsx'
-import Register       from './pages/register.jsx'
-import Questionnaire  from './pages/Questionnaire.jsx'
-import Navbar         from './components/Navbar.jsx'
-import Homepage       from './pages/Homepage.jsx'
-import Analyzer       from './pages/Analyzer.jsx'
-import Feedback       from './pages/Feedback.jsx'
-import Tracking       from './pages/Tracking.jsx'
-import BudgetTracker  from './pages/BudgetTracker.jsx'
-import Profile        from './pages/Profile.jsx'
-
-function PrivateLayout() {
-  const isAuth = localStorage.getItem('isLoggedIn') === 'true'
-  const location = useLocation()
-
-  if (!isAuth) {
-    // Not logged in
-    return <Navigate to="/login" replace />
-  }
-
-  const user  = localStorage.getItem('currentUser')
-  const doneQ = localStorage.getItem(`questionnaireDone_${user}`) === 'true'
-
-  // If they haven’t completed the questionnaire, always redirect them there
-  if (!doneQ && location.pathname !== '/questionnaire') {
-    return <Navigate to="/questionnaire" replace />
-  }
-
-  // Otherwise show the normal navbar + child route
-  return (
-    <>
-      <Navbar />
-      <Outlet />
-    </>
-  )
-}
+import Homepage from './pages/Homepage'
+import Analyzer from './pages/Analyzer'
+import BudgetTracker from './pages/BudgetTracker'
+import Feedback from './pages/Feedback'
+import History from './pages/Tracking'
+import Profile from './pages/Profile'
+import Login from './pages/login'
+import Register from './pages/register'
+import Questionnaire from './pages/Questionnaire'
+import Navbar from './components/Navbar'
 
 export default function App() {
-  const isAuth = localStorage.getItem('isLoggedIn') === 'true'
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [needsOnboarding, setNeedsOnboarding] = useState(false)
+
+  useEffect(() => {
+    const loggedIn = localStorage.getItem('isLoggedIn') === 'true'
+    const onboardingDone = localStorage.getItem('hasCompletedOnboarding') === 'true'
+    setIsLoggedIn(loggedIn)
+    setNeedsOnboarding(loggedIn && !onboardingDone)
+  }, [])
+
+  const showNavbar = !['/login', '/register'].includes(window.location.pathname)
 
   return (
     <Router>
+      {showNavbar && <Navbar />}
       <Routes>
-        {/* Public */}
-        <Route
-          path="/login"
-          element={isAuth ? <Navigate to="/" replace /> : <Login />}
-        />
-        <Route
-          path="/register"
-          element={isAuth ? <Navigate to="/" replace /> : <Register />}
-        />
+        {/* Public Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-        {/* Protected */}
-        <Route element={<PrivateLayout />}>
-          {/* New explicit questionnaire route */}
-          <Route path="/questionnaire" element={<Questionnaire />} />
+        {/* Onboarding Redirect */}
+        {needsOnboarding && <Route path="*" element={<Navigate to="Questionnaire" />} />}
 
-          {/* Your real app pages */}
-          <Route path="/"         element={<Homepage />} />
-          <Route path="/analyzer" element={<Analyzer />} />
-          <Route path="/feedback" element={<Feedback />} />
-          <Route path="/budget"   element={<BudgetTracker />} />
-          <Route path="/history"  element={<Tracking />} />
-          <Route path="/profile"  element={<Profile />} />
-        </Route>
+        {/* Main App Routes */}
+        <Route path="/Questionnaire" element={<Questionnaire />} />
+        <Route path="/" element={<Homepage />} />
+        <Route path="/analyzer" element={<Analyzer />} />
+        <Route path="/budget" element={<BudgetTracker />} />
+        <Route path="/feedback" element={<Feedback />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/profile" element={<Profile />} />
 
-        {/* Fallback */}
-        <Route
-          path="*"
-          element={
-            isAuth
-              ? <Navigate to="/" replace />
-              : <Navigate to="/login" replace />
-          }
-        />
+        {/* Default fallback */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
   )

@@ -1,31 +1,14 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from dotenv import load_dotenv
-import os
-from .scorer.gpt_scorer import get_decision_score
+import ollama
+from util import remove_think_tags
 
-# Load environment variables from .env
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-env_path = os.path.join(BASE_DIR, ".env")
-load_dotenv(dotenv_path=env_path)
 
-print("[DEBUG] OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY"))
+MODEL = "deepseek-r1:latest"
+PROMPT = "Hello! Tell me about yourself."
 
-app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Generate it in one shot.
+result = ollama.generate(model=MODEL, prompt=PROMPT)
+response = result["response"]
 
-class DecisionRequest(BaseModel):
-    decision_text: str
-
-@app.post("/score-decision")
-async def score_decision(data: DecisionRequest):
-    result = await get_decision_score(data.decision_text)
-    return result
+cleaned_response = remove_think_tags(response)
+print(cleaned_response)
