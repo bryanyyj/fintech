@@ -45,17 +45,41 @@ export default function Questionnaire() {
   const next = () => setStep(s => s + 1)
   const prev = () => setStep(s => s - 1)
 
-  const handleSubmit = e => {
-    e.preventDefault()
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const userId = localStorage.getItem('userId'); // Read user_id
+
     const profileData = {
+      user_id: userId, // Include it in the payload
       ...form,
       spendingPriorities,
       completedAt: new Date().toISOString()
+    };
+
+    try {
+      const response = await fetch('http://localhost:3000/api/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include', // optional: only if you're using cookies/sessions
+        body: JSON.stringify(profileData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit profile');
+      }
+
+      const result = await response.json();
+      console.log('Profile saved:', result);
+      setStep(6); // Go to completion screen
+    } catch (error) {
+      console.error('Error submitting profile:', error);
+      alert('There was a problem saving your profile.');
     }
-    // Note: In a real app, you'd send this to your backend
-    console.log('Profile completed:', profileData)
-    setStep(6) // Show completion screen
-  }
+  };
+
 
   const getStepIcon = (stepNum) => {
     const icons = {
