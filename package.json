@@ -1,5 +1,8 @@
 {
   "dependencies": {
-    "dotenv": "^16.5.0"
+    "dotenv": "^16.5.0",
+    "fastapi": "^0.0.8",
+    "ollama": "^0.5.16",
+    "pydantic": "^0.0.1-security"
   }
 }

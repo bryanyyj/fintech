@@ -8,7 +8,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light;
+  color-scheme: dark;
+  color: #e5e7eb; /* Tailwind gray-200 */
+  background-color: #181926;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -20,56 +22,120 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: transparent; /* Let components handle background */
-  color: inherit;
+  background-color: #181926;
+  color: #e5e7eb;
 }
 
-/* Link styling */
-a {
+/* Remove global link styling to let Tailwind handle it */
+/* a {
   font-weight: 500;
   color: #646cff;
   text-decoration: inherit;
 }
+
 a:hover {
   color: #535bf2;
+} */
+
+/* Navbar custom styles */
+.navbar {
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.18);
+  border-radius: 0 0 18px 18px;
+  backdrop-filter: blur(6px);
+  background: linear-gradient(90deg, #232946 0%, #3b3486 50%, #53389e 100%);
+}
+
+/* Navbar link transitions and active state */
+.nav-link {
+  transition: color 0.2s, border-bottom 0.2s;
+  position: relative;
+  color: #e5e7eb !important;
+}
+
+.nav-link.active, .nav-link:active, .nav-link:focus {
+  color: #f472b6 !important; /* Tailwind pink-400 */
+  border-bottom: 2px solid #fff;
+}
+
+.nav-link:hover {
+  color: #f9a8d4 !important; /* Tailwind pink-300 */
+}
+
+/* Dropdown menu custom styles */
+.dropdown-menu {
+  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.22);
+  border-radius: 10px;
+  min-width: 150px;
+  background: #232946;
+  color: #e5e7eb;
+  padding: 0.5rem 0;
+  animation: dropdownIn 0.18s cubic-bezier(.4,0,.2,1);
+  border: 1px solid #393e5c;
+}
+
+.dropdown-menu button {
+  background: transparent;
+  color: #e5e7eb;
+}
+.dropdown-menu button:hover {
+  background: #393e5c;
+  color: #f472b6;
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Card, modal, chat bubble, etc. */
+.card, .modal, .chat-bubble {
+  background: #232946;
+  color: #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.18);
+  border: 1px solid #393e5c;
 }
 
 /* Headings */
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+h1, h2, h3, h4, h5, h6 {
+  color: #f4f4f5;
 }
 
 /* Buttons */
 button {
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: 1px solid #393e5c;
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #232946;
+  color: #e5e7eb;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s, background 0.2s, color 0.2s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: #f472b6;
+  background: #393e5c;
+  color: #f472b6;
 }
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-/* Light mode overrides */
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* Inputs */
+input, textarea, select {
+  background: #181926;
+  color: #e5e7eb;
+  border: 1px solid #393e5c;
+  border-radius: 6px;
+  padding: 0.5em 1em;
+  transition: border-color 0.2s;
 }
+input:focus, textarea:focus, select:focus {
+  border-color: #f472b6;
+  outline: none;
+}
+
+/* Remove light mode overrides */
