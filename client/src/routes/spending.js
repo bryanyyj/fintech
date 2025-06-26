@@ -1,8 +1,10 @@
 import express from 'express';
 const router = express.Router();
 
-import { getSpendingData } from '../controllers/spendController.js'
+import { getSpendingData, postBudget } from '../controllers/spendController.js'
 
 router.get('/', getSpendingData);
+
+router.post('/', postBudget)
 
 export default router;

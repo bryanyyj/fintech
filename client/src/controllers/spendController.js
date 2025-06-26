@@ -31,3 +31,50 @@ export const getSpendingData = (req, res, next) => {
 
     model.getSpending(data, callback);
 };
+
+export const postTransaction = (req, res, next) => {
+
+    const data = {
+        userId: req.body.userId,
+        amount: req.body.amount,
+        category_id: req.body.category_id,
+        description: req.body.description,
+        transaction_date: req.body.transaction_date
+    };
+
+    const callback = (error, results, fields) => {
+        if (error) {
+            console.error("Error posting transaction data:", error);
+            return res.status(500).json({ error: "Internal server error" });
+        }
+
+        return res.status(200).json();
+    };
+
+    model.insertTransaction(data, callback);
+}
+
+export const postBudget = (req, res, next) => {
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1; // JavaScript months are 0-based
+
+    const data = {
+        userId: req.body.userId,
+        year: year,
+        month_num: month,
+        budget_amount: req.body.budget_amount
+    };
+
+    const callback = (error, results, fields) => {
+        if (error) {
+            console.error("Error posting budget data:", error);
+            return res.status(500).json({ error: "Internal server error" });
+        }
+
+        return res.status(200).json();
+    };
+
+    model.insertBudget(data, callback);
+}
