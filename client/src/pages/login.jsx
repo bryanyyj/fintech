@@ -1,12 +1,12 @@
 // src/pages/Login.jsx
 import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import AuthForm from "../components/AuthForm"
+import AuthForm from "../components/authform"
 
 export default function Login() {
   const navigate = useNavigate()
 
-  // On mount: if there’s already a token, verify it and restore session
+  // On mount: if there's already a token, verify it and restore session
   useEffect(() => {
     const token = localStorage.getItem("token")
     if (token) {
@@ -19,7 +19,7 @@ export default function Login() {
           if (data.userId) {
             localStorage.setItem("userId", data.userId)
             localStorage.setItem("isLoggedIn", "true")
-            navigate("/", { replace: true })
+            navigate("/home", { replace: true })
           } else {
             // bad token → clear
             localStorage.removeItem("token")
@@ -63,7 +63,7 @@ export default function Login() {
           if (vd.userId) localStorage.setItem("userId", vd.userId)
         }
 
-        navigate("/", { replace: true })
+        navigate("/home", { replace: true })
         return
       }
     } catch (err) {
@@ -74,9 +74,20 @@ export default function Login() {
     const users = JSON.parse(localStorage.getItem("users") || "[]")
     const user = users.find(u => u.email === email && u.password === password)
     if (user) {
+      // Ensure userId is an integer
+      let userId = user.userId;
+      if (!userId || isNaN(parseInt(userId, 10))) {
+        // Assign a new integer userId if missing or invalid
+        userId = Date.now();
+        user.userId = userId;
+        // Update users array in localStorage
+        const updatedUsers = users.map(u => u.email === email ? { ...u, userId } : u);
+        localStorage.setItem("users", JSON.stringify(updatedUsers));
+      }
       localStorage.setItem("isLoggedIn", "true")
       localStorage.setItem("currentUser", email)
-      navigate("/", { replace: true })
+      localStorage.setItem("userId", parseInt(userId, 10))
+      navigate("/home", { replace: true })
     } else {
       alert("Invalid email or password.")
     }

@@ -1,6 +1,6 @@
 // src/pages/Register.jsx
 import { useNavigate } from "react-router-dom"
-import AuthForm from "../components/AuthForm"
+import AuthForm from "../components/authform"
 
 export default function Register() {
   const navigate = useNavigate()
@@ -44,7 +44,7 @@ export default function Register() {
         }
 
         alert(data.message || "Registration successful!")
-        navigate("/", { replace: true })
+        navigate("/home", { replace: true })
         return
       } else {
         alert(data.message || "Registration failed on server.")
@@ -61,13 +61,20 @@ export default function Register() {
       return
     }
 
-    users.push({ name: full_name, email, password })
+    // Assign a unique incremental integer userId
+    let maxId = 0;
+    users.forEach(u => {
+      if (typeof u.userId === 'number' && u.userId > maxId) maxId = u.userId;
+    });
+    const userId = maxId + 1;
+    users.push({ name: full_name, email, password, userId })
     localStorage.setItem("users", JSON.stringify(users))
     localStorage.setItem("isLoggedIn", "true")
     localStorage.setItem("currentUser", email)
+    localStorage.setItem("userId", userId)
 
     alert("Registration saved locally! You are now logged in.")
-    navigate("/", { replace: true })
+    navigate("/home", { replace: true })
   }
 
   return (

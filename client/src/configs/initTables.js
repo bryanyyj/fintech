@@ -1,11 +1,13 @@
 import pool from '../services/db.js';
 
 const SQLSTATEMENT = `
-DROP TABLE IF EXISTS User_financial_profiles;
+DROP TABLE IF EXISTS user_financial_profiles;
 DROP TABLE IF EXISTS transactions;
 DROP TABLE IF EXISTS budgets;
+DROP TABLE IF EXISTS budget_tracking;
+DROP TABLE IF EXISTS user_profile;
+DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS User;
-DROP TABLE IF EXISTS Categories;
 
 CREATE TABLE User (
   user_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -82,7 +84,6 @@ CREATE TABLE budgets (
     UNIQUE KEY unique_user_month (user_id, year, month_num),
     FOREIGN KEY (user_id) REFERENCES user(user_id)
 );
-
 
 `
 

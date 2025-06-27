@@ -7,9 +7,9 @@ import {
   Outlet
 } from 'react-router-dom'
 
-import Login          from './pages/Login.jsx'
-import Register       from './pages/Register.jsx'
-import Landing        from './pages/Landing.jsx'
+import Login          from './pages/login.jsx'
+import Register       from './pages/register.jsx'
+import Landing        from './pages/landing.jsx'
 import Questionnaire  from './pages/Questionnaire.jsx'
 
 import Navbar         from './components/Navbar.jsx'
@@ -38,11 +38,10 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Public: Landing / Login / Register */}
-        <Route
-          path="/"
-          element={isAuth ? <Navigate to="/home" replace /> : <Landing />}
-        />
+        {/* Public: Landing page (always accessible) */}
+        <Route path="/" element={<Landing />} />
+
+        {/* Public: Login / Register (only if not logged in) */}
         <Route
           path="/login"
           element={isAuth ? <Navigate to="/home" replace /> : <Login />}

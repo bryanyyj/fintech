@@ -45,13 +45,14 @@ const TransactionsPage = () => {
   // Fetch from backend
   useEffect(() => {
     const userId = localStorage.getItem('userId');
-    if (!userId) {
-      alert("User ID not found. Please log in again.");
+    const numericUserId = parseInt(userId, 10);
+    if (!userId || isNaN(numericUserId)) {
+      alert("User ID not found or invalid. Please log in again.");
       navigate('/login');
       return;
     }
 
-    fetch(`http://localhost:3000/api/transactions?userId=${userId}`)
+    fetch(`http://localhost:3000/api/transactions?userId=${numericUserId}`)
       .then(res => res.json())
       .then(data => {
         // If backend gave message instead of data, fallback to empty array
@@ -105,34 +106,55 @@ const TransactionsPage = () => {
   }, [transactions, selectedCategory, searchTerm]);
 
   const handleAddTransaction = () => {
-    if (newTransaction.amount && newTransaction.category) {
-      const userId = localStorage.getItem('userId');
-
-      const payload = {
-        user_id: userId,
-        ...newTransaction,
-        amount: parseFloat(newTransaction.amount)
-      };
-
-      fetch(`http://localhost:3000/api/transactions?userId=${userId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-        .then(res => res.json())
-        .then(data => {
-          setTransactions([data, ...transactions]);
-          setNewTransaction({
-            amount: '',
-            category: '',
-            description: '',
-            date: new Date().toISOString().split('T')[0],
-            receipt: null
-          });
-          setShowModal(false);
-        })
-        .catch(err => console.error('Failed to add transaction:', err));
+    // Validate all required fields
+    if (!newTransaction.amount || !newTransaction.category || !newTransaction.date) {
+      alert('Please fill in all required fields.');
+      return;
     }
+    const userId = localStorage.getItem('userId');
+    const numericUserId = parseInt(userId, 10);
+    if (isNaN(numericUserId)) {
+      alert('User ID is invalid. Please log in again.');
+      return;
+    }
+
+    // Format date to YYYY-MM-DD
+    let formattedDate = newTransaction.date;
+    // If date is in DD/MM/YYYY, convert it
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(newTransaction.date)) {
+      const [day, month, year] = newTransaction.date.split('/');
+      formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+    // If date is in MM/DD/YYYY, convert it (just in case)
+    else if (/^\d{4}-\d{2}-\d{2}$/.test(newTransaction.date)) {
+      formattedDate = newTransaction.date;
+    }
+
+    const payload = {
+      user_id: numericUserId,
+      ...newTransaction,
+      amount: parseFloat(newTransaction.amount),
+      date: formattedDate // use the formatted date
+    };
+
+    fetch(`http://localhost:3000/api/transactions?userId=${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(res => res.json())
+      .then(data => {
+        setTransactions([data, ...transactions]);
+        setNewTransaction({
+          amount: '',
+          category: '',
+          description: '',
+          date: new Date().toISOString().split('T')[0],
+          receipt: null
+        });
+        setShowModal(false);
+      })
+      .catch(err => console.error('Failed to add transaction:', err));
   };
 
   const handleFileUpload = (e) => {
@@ -318,18 +340,28 @@ const TransactionsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredTransactions.map((transaction, index) => (
-                  <tr key={transaction.id} className={`border-t border-gray-700 ${index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-750'}`}>
-                    <td className="p-4 text-gray-300">{new Date(transaction.transaction_date).toLocaleDateString()}</td>
-                    <td className="p-4 font-semibold text-red-400">
-                      ${parseFloat(transaction.amount || 0).toFixed(2)}
+                {filteredTransactions.filter(t => t && t.amount !== undefined && t.category && (t.transaction_date || t.date)).length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center text-gray-400 py-8">
+                      No transactions found.
                     </td>
-                    <td className="p-4">
-                      <span className="bg-gray-600 px-2 py-1 rounded text-sm">{transaction.category}</span>
-                    </td>
-                    <td className="p-4 text-gray-300">{transaction.description}</td>
                   </tr>
-                ))}
+                ) : (
+                  filteredTransactions
+                    .filter(t => t && t.amount !== undefined && t.category && (t.transaction_date || t.date))
+                    .map((transaction, index) => (
+                      <tr key={transaction.id || index} className={`border-t border-gray-700 ${index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-750'}`}>
+                        <td className="p-4 text-gray-300">{transaction.transaction_date || transaction.date ? new Date(transaction.transaction_date || transaction.date).toLocaleDateString() : ""}</td>
+                        <td className="p-4 font-semibold text-red-400">
+                          ${parseFloat(transaction.amount || 0).toFixed(2)}
+                        </td>
+                        <td className="p-4">
+                          <span className="bg-gray-600 px-2 py-1 rounded text-sm">{transaction.category}</span>
+                        </td>
+                        <td className="p-4 text-gray-300">{transaction.description}</td>
+                      </tr>
+                    ))
+                )}
               </tbody>
             </table>
           </div>

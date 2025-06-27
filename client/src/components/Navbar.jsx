@@ -38,7 +38,7 @@ export default function Navbar() {
     <div className="flex items-center justify-between h-16">
       {/* Left side links */}
       <ul className="flex space-x-6 text-sm font-semibold">
-        <li><NavLink to="/"         end        className={navLinkClass}>Homepage      </NavLink></li>
+        <li><NavLink to="/home"     end        className={navLinkClass}>Homepage      </NavLink></li>
         <li><NavLink to="/analyzer"           className={navLinkClass}>Analyzer      </NavLink></li>
         <li><NavLink to="/Feedback"           className={navLinkClass}>Feedback      </NavLink></li>
         <li><NavLink to="/budget"             className={navLinkClass}>Budget Tracker</NavLink></li>
