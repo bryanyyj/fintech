@@ -1,15 +1,16 @@
 import pool from '../services/db.js';
 
-export const getSpending = (data, callback) =>
+export const getTransactions = (data, callback) =>
 {
     const SQLSTATEMENT = `
-        SELECT * FROM user_financial_profiles
+        SELECT * FROM transactions
         WHERE user_id = ?;
     `;
     
     const VALUES = [data.userId]
     pool.query(SQLSTATEMENT, VALUES, callback);
 }
+
 
 export const insertBudget = (data, callback) =>
 {
@@ -26,10 +27,10 @@ export const insertBudget = (data, callback) =>
 export const insertTransaction = (data, callback) =>
 {
     const SQLSTATMENT = `
-    INSERT INTO budgets (user_id, amount, category_id, description, transaction_date)
+    INSERT INTO transactions (user_id, amount, category, description, transaction_date)
     VALUES (?, ?, ?, ?, ?);
     `;
-    const VALUES = [data.userId, data.amount, data.category_id, data.description, data.transaction_date];
+    const VALUES = [data.userId, data.amount, data.category, data.description, data.transaction_date];
 
     pool.query(SQLSTATMENT, VALUES, callback);
 }

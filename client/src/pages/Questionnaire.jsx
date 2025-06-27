@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, DollarSign, User, Home, TrendingUp, Target, CheckCircle } from 'lucide-react'
 
 export default function Questionnaire() {
@@ -48,7 +49,11 @@ export default function Questionnaire() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const userId = localStorage.getItem('userId'); // Read user_id
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      alert("User ID not found. Please log in again.");
+      return;
+    }
 
     const profileData = {
       user_id: userId, // Include it in the payload
@@ -58,27 +63,38 @@ export default function Questionnaire() {
     };
 
     try {
-      const response = await fetch('http://localhost:3000/api/profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include', // optional: only if you're using cookies/sessions
-        body: JSON.stringify(profileData)
-      });
+        // Step 1: Check if profile exists
+        const checkResponse = await fetch(`http://localhost:3000/api/profile?userId=${userId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
 
-      if (!response.ok) {
-        throw new Error('Failed to submit profile');
+        // Step 2: If found, use PUT to update; else, use POST to create
+        const method = checkResponse.ok ? 'PUT' : 'POST';
+
+        const submitResponse = await fetch('http://localhost:3000/api/profile', {
+          method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify(profileData)
+        });
+
+        if (!submitResponse.ok) {
+          throw new Error('Failed to submit profile');
+        }
+
+        const result = await submitResponse.json();
+        console.log('Profile saved:', result);
+        setStep(6); // Go to completion screen
+      } catch (error) {
+        console.error('Error submitting profile:', error);
+        alert('There was a problem saving your profile.');
       }
-
-      const result = await response.json();
-      console.log('Profile saved:', result);
-      setStep(6); // Go to completion screen
-    } catch (error) {
-      console.error('Error submitting profile:', error);
-      alert('There was a problem saving your profile.');
-    }
-  };
+    };
 
 
   const getStepIcon = (stepNum) => {
@@ -116,6 +132,8 @@ export default function Questionnaire() {
     setSpendingPriorities(newPriorities)
   }
 
+  const navigate = useNavigate();
+  
   if (step === 6) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-green-100 to-blue-100 p-4">
@@ -160,7 +178,7 @@ export default function Questionnaire() {
           </div>
 
           <button 
-            onClick={() => console.log('Navigate to dashboard')}
+            onClick={() => navigate('/profile')}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
           >
             Go to Dashboard

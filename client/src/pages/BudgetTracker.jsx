@@ -11,15 +11,17 @@ import {
   BarElement,
   Title,
 } from 'chart.js';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
 const TransactionsPage = () => {
-  const [transactions, setTransactions] = useState([
-    { id: 1, date: '2024-06-23', amount: 25.50, category: 'Food', description: 'Lunch at cafe' },
-    { id: 2, date: '2024-06-22', amount: 45.00, category: 'Transport', description: 'Grab' },
-    { id: 3, date: '2024-06-21', amount: 120.00, category: 'Shopping', description: 'New shoes' },
-  ]);
+  // const [transactions, setTransactions] = useState([
+  //   { id: 1, date: '2024-06-23', amount: 25.50, category: 'Food', description: 'Lunch at cafe' },
+  //   { id: 2, date: '2024-06-22', amount: 45.00, category: 'Transport', description: 'Grab' },
+  //   { id: 3, date: '2024-06-21', amount: 120.00, category: 'Shopping', description: 'New shoes' },
+  // ]);
+  const [transactions, setTransactions] = useState([]);
 
   const [showModal, setShowModal] = useState(false);
   const [filterPeriod, setFilterPeriod] = useState('This Month');
@@ -38,13 +40,47 @@ const TransactionsPage = () => {
   const categories = ['All', 'Food', 'Transport', 'Shopping', 'Entertainment', 'Bills', 'Health', 'Other'];
   const periods = ['This Month', 'Last 3 Months', 'All Time'];
 
+  const navigate = useNavigate();
+
+  // Fetch from backend
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      alert("User ID not found. Please log in again.");
+      navigate('/login');
+      return;
+    }
+
+    fetch(`http://localhost:3000/api/transactions?userId=${userId}`)
+      .then(res => res.json())
+      .then(data => {
+        // If backend gave message instead of data, fallback to empty array
+        if (!Array.isArray(data)) {
+          console.warn("No transaction array found:", data);
+          setTransactions([]);
+          setFilteredTransactions([]);
+          return;
+        }
+
+        setTransactions(data);
+        setFilteredTransactions(data);
+      })
+      .catch(err => console.error('Fetch failed:', err));
+  }, []);
+
+
   // Calculate summary data
-  const totalThisMonth = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
-  const remainingBudget = 3500 - totalThisMonth; // Assuming 3500 budget
+  const totalThisMonth = filteredTransactions.reduce(
+    (sum, t) => sum + parseFloat(t.amount || 0), 0
+  );
+
   const categoryTotals = filteredTransactions.reduce((acc, t) => {
-    acc[t.category] = (acc[t.category] || 0) + t.amount;
+    const category = t.category;
+    acc[category] = (acc[category] || 0) + parseFloat(t.amount || 0);
     return acc;
   }, {});
+  
+  const remainingBudget = 3500 - totalThisMonth; // Assuming 3500 budget
   const topCategory = Object.keys(categoryTotals).reduce((a, b) => 
     categoryTotals[a] > categoryTotals[b] ? a : b, 'Food'
   );
@@ -70,22 +106,32 @@ const TransactionsPage = () => {
 
   const handleAddTransaction = () => {
     if (newTransaction.amount && newTransaction.category) {
-      const transaction = {
-        id: Date.now(),
+      const userId = localStorage.getItem('userId');
+
+      const payload = {
+        user_id: userId,
         ...newTransaction,
-        amount: parseFloat(newTransaction.amount),
-        date: newTransaction.date
+        amount: parseFloat(newTransaction.amount)
       };
-      
-      setTransactions([transaction, ...transactions]);
-      setNewTransaction({
-        amount: '',
-        category: '',
-        description: '',
-        date: new Date().toISOString().split('T')[0],
-        receipt: null
-      });
-      setShowModal(false);
+
+      fetch(`http://localhost:3000/api/transactions?userId=${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(res => res.json())
+        .then(data => {
+          setTransactions([data, ...transactions]);
+          setNewTransaction({
+            amount: '',
+            category: '',
+            description: '',
+            date: new Date().toISOString().split('T')[0],
+            receipt: null
+          });
+          setShowModal(false);
+        })
+        .catch(err => console.error('Failed to add transaction:', err));
     }
   };
 
@@ -112,9 +158,14 @@ const TransactionsPage = () => {
 
   // Prepare data for Bar Chart (Spending by Date)
   const spendingByDate = filteredTransactions.reduce((acc, t) => {
-    acc[t.date] = (acc[t.date] || 0) + t.amount;
+  const dateKey = t.transaction_date || t.date;
+    if (!dateKey) return acc;
+
+    const amount = parseFloat(t.amount || 0); // ✅ convert to number
+    acc[dateKey] = (acc[dateKey] || 0) + amount;
     return acc;
   }, {});
+
   const barData = {
     labels: Object.keys(spendingByDate).sort(),
     datasets: [
@@ -125,6 +176,7 @@ const TransactionsPage = () => {
       },
     ],
   };
+
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -268,8 +320,10 @@ const TransactionsPage = () => {
               <tbody>
                 {filteredTransactions.map((transaction, index) => (
                   <tr key={transaction.id} className={`border-t border-gray-700 ${index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-750'}`}>
-                    <td className="p-4 text-gray-300">{new Date(transaction.date).toLocaleDateString()}</td>
-                    <td className="p-4 font-semibold text-red-400">${transaction.amount.toFixed(2)}</td>
+                    <td className="p-4 text-gray-300">{new Date(transaction.transaction_date).toLocaleDateString()}</td>
+                    <td className="p-4 font-semibold text-red-400">
+                      ${parseFloat(transaction.amount || 0).toFixed(2)}
+                    </td>
                     <td className="p-4">
                       <span className="bg-gray-600 px-2 py-1 rounded text-sm">{transaction.category}</span>
                     </td>

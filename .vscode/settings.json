@@ -1,4 +1,5 @@
 {
     "postman.settings.dotenv-detection-notification-visibility": false,
-    "codetogether.virtualCursorJoin": "ownVirtualCursor"
+    "codetogether.virtualCursorJoin": "ownVirtualCursor",
+    "codetogether.virtualCursorRemember": true
 }

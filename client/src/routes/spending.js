@@ -1,10 +1,11 @@
 import express from 'express';
 const router = express.Router();
 
-import { getSpendingData, postBudget } from '../controllers/spendController.js'
+import { postBudget, getTransactionData, postTransaction } from '../controllers/spendController.js'
 
-router.get('/', getSpendingData);
+router.get('/transactions', getTransactionData)
 
-router.post('/', postBudget)
+router.post('/budget', postBudget)
+router.post('/transactions', postTransaction)
 
 export default router;

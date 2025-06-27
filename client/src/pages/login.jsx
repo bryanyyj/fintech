@@ -1,20 +1,4 @@
 // src/pages/Login.jsx
-// import AuthForm from "../components/authform";
-
-// const Login = () => {
-//   const handleLogin = (e) => {
-//     e.preventDefault();
-//     // Your login logic here
-//     alert("Logged in!");
-//   };
-
-//   return <AuthForm title="Welcome Back!" buttonText="Login" onSubmit={handleLogin} isLogin={true} />;
-// };
-
-// export default Login;
-
-
-// src/pages/Login.jsx
 import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import AuthForm from "../components/AuthForm"

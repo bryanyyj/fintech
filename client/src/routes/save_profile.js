@@ -1,8 +1,12 @@
 import express from 'express';
 const router = express.Router();
 
-import { saveProfileToDB } from '../controllers/profileController.js'
+import { profile } from '../middlewares/profileMiddleware.js'
+import { saveProfileToDB, updateProfileToDB, getProfileData } from '../controllers/profileController.js'
 
-router.post('/', saveProfileToDB);
+router.post('/', profile, saveProfileToDB);
+router.put('/', profile, updateProfileToDB)
+
+router.get('/', getProfileData)
 
 export default router;

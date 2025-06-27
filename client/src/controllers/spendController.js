@@ -1,13 +1,18 @@
-import * as model from '../models/retrieveModel.js'
 
-export const getSpendingData = (req, res, next) => {
+import * as model from '../models/spendModel.js'
+
+export const getTransactionData = (req, res, next) => {
     const data = {
-        userId: req.body.userId
+        userId: req.query.userId
     };
+
+    if (data.userId == undefined) {
+        return res.status(404).json({message: "userId is undefined"})
+    }
 
     const callback = (error, results, fields) => {
         if (error) {
-            console.error("Error fetching spending data:", error);
+            console.error("Error fetching transaction data:", error);
             return res.status(500).json({ error: "Internal server error" });
         }
 
@@ -15,31 +20,20 @@ export const getSpendingData = (req, res, next) => {
             return res.status(404).json({ message: "No spending data found for user" });
         }
 
-        const row = results[0]; // Assume most recent or only entry
-        const spendingData = {
-            spend_food: row.spend_food,
-            spend_transport: row.spend_transport,
-            spend_entertainment: row.spend_entertainment,
-            spend_shopping: row.spend_shopping,
-            spend_travel: row.spend_travel,
-            spend_health: row.spend_health,
-            spend_education: row.spend_education
-        };
-
-        return res.status(200).json(spendingData);
+        return res.status(200).json(results);
     };
 
-    model.getSpending(data, callback);
+    model.getTransactions(data, callback);
 };
 
 export const postTransaction = (req, res, next) => {
 
     const data = {
-        userId: req.body.userId,
+        userId: req.query.userId,
         amount: req.body.amount,
-        category_id: req.body.category_id,
+        category: req.body.category,
         description: req.body.description,
-        transaction_date: req.body.transaction_date
+        transaction_date: req.body.date
     };
 
     const callback = (error, results, fields) => {
@@ -48,7 +42,7 @@ export const postTransaction = (req, res, next) => {
             return res.status(500).json({ error: "Internal server error" });
         }
 
-        return res.status(200).json();
+        return res.status(201).json(data);
     };
 
     model.insertTransaction(data, callback);

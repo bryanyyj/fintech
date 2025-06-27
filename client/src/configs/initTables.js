@@ -59,40 +59,30 @@ CREATE TABLE user_financial_profiles (
 
 );
 
-CREATE TABLE categories (
-    category_id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE
-);
-
-INSERT INTO categories (name) VALUES
-('Food'),
-('Transport'),
-('Shopping'),
-('Entertainment')
-;
-
 CREATE TABLE transactions (
     transaction_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
     amount DECIMAL(10,2) NOT NULL,
-    category_id INT NOT NULL,
+    category TEXT NOT NULL,
     description TEXT,
     transaction_date DATE NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (user_id) REFERENCES user(user_id),
-    FOREIGN KEY (category_id) REFERENCES categories(category_id)
+    FOREIGN KEY (user_id) REFERENCES user(user_id)
 );
 
 CREATE TABLE budgets (
     budget_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    month YEAR,
+    user_id INT NOT NULL,
+    year YEAR NOT NULL,
+    month_num TINYINT NOT NULL,
     budget_amount DECIMAL(10,2) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-    UNIQUE(user_id, month),
+    UNIQUE KEY unique_user_month (user_id, year, month_num),
     FOREIGN KEY (user_id) REFERENCES user(user_id)
 );
+
 
 `
 
