@@ -10,6 +10,8 @@ export default function Navbar() {
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn')
     localStorage.removeItem('currentUser')
+    localStorage.removeItem('userId')
+    localStorage.removeItem('token')
     navigate('/login', { replace: true })
   }
 

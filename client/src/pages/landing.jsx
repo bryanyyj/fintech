@@ -1,6 +1,7 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 export default function Landing() {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden">
 
@@ -22,15 +23,19 @@ export default function Landing() {
           </h1>
         </div>
         <nav className="space-x-6">
-          <Link to="/login" className="hover:text-blue-300 transition-colors duration-300">
+          <button
+            onClick={() => navigate('/login')}
+            className="hover:text-blue-300 transition-colors duration-300 bg-transparent border-none cursor-pointer text-white"
+            style={{ background: 'none' }}
+          >
             Log In
-          </Link>
-          <Link
-            to="/register"
-            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium px-6 py-2 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 transform"
+          </button>
+          <button
+            onClick={() => navigate('/register')}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium px-6 py-2 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 transform border-none cursor-pointer"
           >
             Sign Up
-          </Link>
+          </button>
         </nav>
       </header>
 
