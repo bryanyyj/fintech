@@ -11,6 +11,11 @@ import Login          from './pages/login.jsx'
 import Register       from './pages/register.jsx'
 import Landing        from './pages/landing.jsx'
 import Questionnaire  from './pages/Questionnaire.jsx'
+import Settings       from './pages/Settings.jsx'
+import ForgotPassword from './pages/ForgotPassword.jsx'
+import Onboarding     from './pages/Onboarding.jsx'
+import GoalPlanning   from './pages/GoalPlanning'
+import ReportsAnalytics from './pages/SmartHistory'
 
 import Sidebar        from './components/Navbar.jsx'
 import Homepage       from './pages/Homepage.jsx'
@@ -42,6 +47,7 @@ export default function App() {
       <Routes>
         {/* Public: Landing page (always accessible) */}
         <Route path="/" element={<Landing />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* Public: Login / Register (only if not logged in) */}
         <Route
@@ -67,6 +73,10 @@ export default function App() {
           <Route path="/budget"   element={<BudgetTracker />} />
           <Route path="/history"  element={<Tracking />} />
           <Route path="/profile"  element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/goal-planning" element={<GoalPlanning />} />
+          <Route path="/reports" element={<ReportsAnalytics />} />
         </Route>
 
         {/* Fallback */}

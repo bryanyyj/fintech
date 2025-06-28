@@ -115,6 +115,13 @@ export default function AuthForm({ title, buttonText, onSubmit, isLogin }) {
 
             {/* Link to other auth page */}
             <div className="text-center">
+              {isLogin && (
+                <div className="mb-2">
+                  <Link to="/forgot-password" className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-300">
+                    Forgot Password?
+                  </Link>
+                </div>
+              )}
               {isLogin ? (
                 <p className="text-gray-400">
                   Don't have an account?{" "}

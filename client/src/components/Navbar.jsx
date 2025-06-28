@@ -6,10 +6,16 @@ export default function Sidebar() {
   const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
 
-  const navLinkClass = ({ isActive }) =>
-    isActive
-      ? 'py-2 px-4 rounded-lg bg-blue-600/80 font-semibold block'
-      : 'py-2 px-4 rounded-lg hover:bg-slate-700 block';
+  const navLinkClass = ({ isActive }) => {
+    const baseClass = 'py-2 px-4 rounded-lg block';
+    if (isActive && expanded) {
+      return baseClass + ' bg-blue-600/80 font-semibold';
+    } else if (isActive && !expanded) {
+      return baseClass + ' hover:bg-slate-700';
+    } else {
+      return baseClass + ' hover:bg-slate-700';
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
@@ -21,28 +27,30 @@ export default function Sidebar() {
 
   // List of nav items for easier mapping
   const navItems = [
-    { to: '/dashboard', label: 'Dashboard' },
+    { to: '/home', label: 'Dashboard' },
     { to: '/budget', label: 'Transactions' },
-    { to: '/ai', label: 'AI Advisor' },
-    { to: '/goals', label: 'Goals & Planning' },
-    { to: '/reports', label: 'Reports' },
-    { to: '/settings', label: 'Settings' },
+    { to: '/analyzer', label: 'AI Advisor' },
+    { to: '/goal-planning', label: 'Goal & Planning' },
+    { to: '/reports', label: 'Reports & Analytics' },
     { to: '/profile', label: 'Profile' },
   ];
 
   return (
     <aside
-      className={`h-screen border-r border-slate-700 flex flex-col py-8 px-2 transition-all duration-300 ease-in-out ${expanded ? 'w-64 px-4 bg-slate-800/60 backdrop-blur-lg' : 'w-20 px-2 bg-slate-800/90'} relative`}
+      className={`fixed left-0 top-0 h-screen z-40 border-r border-slate-700 flex flex-col py-8 px-2 transition-all duration-300 ease-in-out ${expanded ? 'w-64 px-4 bg-slate-800/60 backdrop-blur-lg' : 'w-20 px-2 bg-slate-800/90'}`}
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
       style={{ minWidth: expanded ? '16rem' : '5rem' }}
     >
-      <div className="mb-10 flex items-center justify-center cursor-pointer" onClick={() => setExpanded(e => !e)}>
-        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+      <div className={`mb-10 flex flex-col items-center w-full`}>
+        <div
+          className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer"
+          onClick={() => setExpanded(e => !e)}
+        >
           <span className="text-white font-bold text-lg">S</span>
         </div>
         <span
-          className={`ml-3 text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent transition-all duration-300 ease-in-out
+          className={`mt-3 text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent transition-all duration-300 ease-in-out
             ${expanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}
           `}
           style={{

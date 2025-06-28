@@ -11,7 +11,7 @@ import {
   BarElement,
   Title,
 } from 'chart.js';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
@@ -41,6 +41,7 @@ const TransactionsPage = () => {
   const periods = ['This Month', 'Last 3 Months', 'All Time'];
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Fetch from backend
   useEffect(() => {
@@ -69,6 +70,12 @@ const TransactionsPage = () => {
       .catch(err => console.error('Fetch failed:', err));
   }, []);
 
+  useEffect(() => {
+    if (location.state && location.state.openAddModal) {
+      setShowModal(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Calculate summary data
   const totalThisMonth = filteredTransactions.reduce(

@@ -44,7 +44,7 @@ export default function Register() {
         }
 
         alert(data.message || "Registration successful!")
-        navigate("/home", { replace: true })
+        navigate("/onboarding", { replace: true })
         return
       } else {
         alert(data.message || "Registration failed on server.")
@@ -74,7 +74,7 @@ export default function Register() {
     localStorage.setItem("userId", userId)
 
     alert("Registration saved locally! You are now logged in.")
-    navigate("/home", { replace: true })
+    navigate("/onboarding", { replace: true })
   }
 
   return (
