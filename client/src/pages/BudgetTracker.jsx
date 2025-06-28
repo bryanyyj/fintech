@@ -16,13 +16,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
 const TransactionsPage = () => {
-  // const [transactions, setTransactions] = useState([
-  //   { id: 1, date: '2024-06-23', amount: 25.50, category: 'Food', description: 'Lunch at cafe' },
-  //   { id: 2, date: '2024-06-22', amount: 45.00, category: 'Transport', description: 'Grab' },
-  //   { id: 3, date: '2024-06-21', amount: 120.00, category: 'Shopping', description: 'New shoes' },
-  // ]);
   const [transactions, setTransactions] = useState([]);
-
   const [showModal, setShowModal] = useState(false);
   const [filterPeriod, setFilterPeriod] = useState('This Month');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -55,7 +49,6 @@ const TransactionsPage = () => {
     fetch(`http://localhost:3000/api/transactions?userId=${numericUserId}`)
       .then(res => res.json())
       .then(data => {
-        // If backend gave message instead of data, fallback to empty array
         if (!Array.isArray(data)) {
           console.warn("No transaction array found:", data);
           setTransactions([]);
@@ -69,25 +62,24 @@ const TransactionsPage = () => {
       .catch(err => console.error('Fetch failed:', err));
   }, []);
 
-
-  // Calculate summary data
-  const totalThisMonth = filteredTransactions.reduce(
+  // Calculate summary data - USE FULL TRANSACTIONS ARRAY, NOT FILTERED
+  const totalThisMonth = transactions.reduce(
     (sum, t) => sum + parseFloat(t.amount || 0), 0
   );
 
-  const categoryTotals = filteredTransactions.reduce((acc, t) => {
+  const categoryTotals = transactions.reduce((acc, t) => {
     const category = t.category;
     acc[category] = (acc[category] || 0) + parseFloat(t.amount || 0);
     return acc;
   }, {});
   
-  const remainingBudget = 3500 - totalThisMonth; // Assuming 3500 budget
+  const remainingBudget = 3500 - totalThisMonth;
   const topCategory = Object.keys(categoryTotals).reduce((a, b) => 
     categoryTotals[a] > categoryTotals[b] ? a : b, 'Food'
   );
   const topCategoryPercentage = Math.round((categoryTotals[topCategory] / totalThisMonth) * 100) || 0;
 
-  // Filter transactions based on search and filters
+  // Filter transactions based on search and filters - THIS IS FOR TABLE DISPLAY ONLY
   useEffect(() => {
     let filtered = transactions;
     
@@ -106,7 +98,6 @@ const TransactionsPage = () => {
   }, [transactions, selectedCategory, searchTerm]);
 
   const handleAddTransaction = () => {
-    // Validate all required fields
     if (!newTransaction.amount || !newTransaction.category || !newTransaction.date) {
       alert('Please fill in all required fields.');
       return;
@@ -118,23 +109,17 @@ const TransactionsPage = () => {
       return;
     }
 
-    // Format date to YYYY-MM-DD
     let formattedDate = newTransaction.date;
-    // If date is in DD/MM/YYYY, convert it
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(newTransaction.date)) {
       const [day, month, year] = newTransaction.date.split('/');
       formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-    // If date is in MM/DD/YYYY, convert it (just in case)
-    else if (/^\d{4}-\d{2}-\d{2}$/.test(newTransaction.date)) {
-      formattedDate = newTransaction.date;
     }
 
     const payload = {
       user_id: numericUserId,
       ...newTransaction,
       amount: parseFloat(newTransaction.amount),
-      date: formattedDate // use the formatted date
+      date: formattedDate
     };
 
     fetch(`http://localhost:3000/api/transactions?userId=${userId}`, {
@@ -164,7 +149,7 @@ const TransactionsPage = () => {
     }
   };
 
-  // Prepare data for Pie Chart (Spending by Category)
+  // Prepare data for Pie Chart - USE FULL TRANSACTIONS FOR COMPLETE PICTURE
   const pieData = {
     labels: Object.keys(categoryTotals),
     datasets: [
@@ -178,12 +163,12 @@ const TransactionsPage = () => {
     ],
   };
 
-  // Prepare data for Bar Chart (Spending by Date)
-  const spendingByDate = filteredTransactions.reduce((acc, t) => {
-  const dateKey = t.transaction_date || t.date;
+  // Prepare data for Bar Chart - USE FULL TRANSACTIONS FOR COMPLETE TIMELINE
+  const spendingByDate = transactions.reduce((acc, t) => {
+    const dateKey = t.transaction_date || t.date;
     if (!dateKey) return acc;
 
-    const amount = parseFloat(t.amount || 0); // ✅ convert to number
+    const amount = parseFloat(t.amount || 0);
     acc[dateKey] = (acc[dateKey] || 0) + amount;
     return acc;
   }, {});
@@ -198,7 +183,6 @@ const TransactionsPage = () => {
       },
     ],
   };
-
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">

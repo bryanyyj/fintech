@@ -18,7 +18,7 @@ router.use("/login", login);
 router.use("/register", register);
 router.use("/analyze-decision", decision)
 router.use("/profile", profile)
-router.use("/", spend)
+router.use("/transactions", spend)
 
 // JWT and bcrypt routes
 router.post("/jwt/generate", preTokenGenerate, generateToken, beforeSendToken, sendToken);
