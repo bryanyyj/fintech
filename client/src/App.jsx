@@ -12,7 +12,7 @@ import Register       from './pages/register.jsx'
 import Landing        from './pages/landing.jsx'
 import Questionnaire  from './pages/Questionnaire.jsx'
 
-import Navbar         from './components/Navbar.jsx'
+import Sidebar        from './components/Navbar.jsx'
 import Homepage       from './pages/Homepage.jsx'
 import Analyzer       from './pages/Analyzer.jsx'
 import Feedback       from './pages/Feedback.jsx'
@@ -25,10 +25,12 @@ function PrivateLayout() {
   const isAuth = localStorage.getItem('isLoggedIn') === 'true'
   if (!isAuth) return <Navigate to="/" replace />
   return (
-    <>
-      <Navbar />
-      <Outlet />
-    </>
+    <div className="flex min-h-screen">
+      <Sidebar />
+      <div className="flex-1">
+        <Outlet />
+      </div>
+    </div>
   )
 }
 
