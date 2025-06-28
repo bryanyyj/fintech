@@ -7,8 +7,6 @@ import register from './register.js';
 import decision from './analyze_decision.js';
 import profile from './save_profile.js';
 import spend from './spending.js';
-import GoalPlanning from '../pages/GoalPlanning';
-import ReportsAnalytics from '../pages/SmartHistory';
 
 // Controllers and middleware
 import { preTokenGenerate, beforeSendToken, showTokenVerified, preCompare, showCompareSuccess, showHashing } from '../controllers/exampleController.js';
