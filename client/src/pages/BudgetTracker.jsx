@@ -34,10 +34,13 @@ const TransactionsPage = () => {
     category: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
-    receipt: null
+    receipt: null,
+    type: 'Expense'
   });
 
-  const categories = ['All', 'Food', 'Transport', 'Shopping', 'Entertainment', 'Bills', 'Health', 'Other'];
+  const expenseCategories = ['Food', 'Transport', 'Shopping', 'Entertainment', 'Bills', 'Health', 'Other'];
+  const incomeCategories = ['Salary', 'Bonus', 'Investment', 'Gift', 'Other'];
+  const allCategories = ['All', ...expenseCategories];
   const periods = ['This Month', 'Last 3 Months', 'All Time'];
 
   const navigate = useNavigate();
@@ -114,7 +117,7 @@ const TransactionsPage = () => {
 
   const handleAddTransaction = () => {
     // Validate all required fields
-    if (!newTransaction.amount || !newTransaction.category || !newTransaction.date) {
+    if (!newTransaction.amount || !newTransaction.category || !newTransaction.date || !newTransaction.type) {
       alert('Please fill in all required fields.');
       return;
     }
@@ -141,7 +144,8 @@ const TransactionsPage = () => {
       user_id: numericUserId,
       ...newTransaction,
       amount: parseFloat(newTransaction.amount),
-      date: formattedDate // use the formatted date
+      date: formattedDate, // use the formatted date
+      type: newTransaction.type // Ensure type is included
     };
 
     fetch(`http://localhost:3000/api/transactions?userId=${userId}`, {
@@ -157,7 +161,8 @@ const TransactionsPage = () => {
           category: '',
           description: '',
           date: new Date().toISOString().split('T')[0],
-          receipt: null
+          receipt: null,
+          type: 'Expense' // Reset type to default
         });
         setShowModal(false);
       })
@@ -240,7 +245,7 @@ const TransactionsPage = () => {
 
               {/* Category Filter */}
               <div className="flex flex-wrap gap-2">
-                {categories.map(category => (
+                {allCategories.map(category => (
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
@@ -390,6 +395,24 @@ const TransactionsPage = () => {
 
               <div className="space-y-4">
                 <div>
+                  <label className="block text-sm font-medium mb-2">Type *</label>
+                  <select
+                    value={newTransaction.type}
+                    onChange={(e) => {
+                      const newType = e.target.value;
+                      setNewTransaction({
+                        ...newTransaction,
+                        type: newType,
+                        category: '' // Reset category when type changes
+                      });
+                    }}
+                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="Expense">Expense</option>
+                    <option value="Income">Income</option>
+                  </select>
+                </div>
+                <div>
                   <label className="block text-sm font-medium mb-2">Amount ($) *</label>
                   <input
                     type="number"
@@ -409,7 +432,7 @@ const TransactionsPage = () => {
                     className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
                   >
                     <option value="">Select category</option>
-                    {categories.slice(1).map(category => (
+                    {(newTransaction.type === 'Income' ? incomeCategories : expenseCategories).map(category => (
                       <option key={category} value={category}>{category}</option>
                     ))}
                   </select>

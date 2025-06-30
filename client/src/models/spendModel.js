@@ -15,10 +15,10 @@ export const getTransactions = (data, callback) =>
 export const insertBudget = (data, callback) =>
 {
     const SQLSTATMENT = `
-    INSERT INTO budgets (user_id, year, month, budget_amount)
-    VALUES (?, ?, ?, ?);
+    INSERT INTO budgets (user_id, year, month, budget_amount, type)
+    VALUES (?, ?, ?, ?,?);
     `;
-    const VALUES = [data.userId, data.year, data.month, data.budget_amount];
+    const VALUES = [data.userId, data.year, data.month, data.budget_amount, data.type];
 
     pool.query(SQLSTATMENT, VALUES, callback);
 }
