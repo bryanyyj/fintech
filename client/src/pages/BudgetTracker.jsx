@@ -33,8 +33,7 @@ const TransactionsPage = () => {
     amount: '',
     category: '',
     description: '',
-    date: new Date().toISOString().split('T')[0],
-    receipt: null
+    date: new Date().toISOString().split('T')[0]
   });
 
   const categories = ['All', 'Food', 'Transport', 'Shopping', 'Entertainment', 'Bills', 'Health', 'Other'];
@@ -156,19 +155,11 @@ const TransactionsPage = () => {
           amount: '',
           category: '',
           description: '',
-          date: new Date().toISOString().split('T')[0],
-          receipt: null
+          date: new Date().toISOString().split('T')[0]
         });
         setShowModal(false);
       })
       .catch(err => console.error('Failed to add transaction:', err));
-  };
-
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setNewTransaction({...newTransaction, receipt: file});
-    }
   };
 
   // Prepare data for Pie Chart (Spending by Category)
@@ -434,29 +425,6 @@ const TransactionsPage = () => {
                     onChange={(e) => setNewTransaction({...newTransaction, date: e.target.value})}
                     className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Receipt (optional)</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      id="receipt-upload"
-                    />
-                    <label
-                      htmlFor="receipt-upload"
-                      className="flex items-center gap-2 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors"
-                    >
-                      <Upload size={16} />
-                      Upload Receipt
-                    </label>
-                    {newTransaction.receipt && (
-                      <span className="text-sm text-green-400">{newTransaction.receipt.name}</span>
-                    )}
-                  </div>
                 </div>
 
                 <div className="flex gap-4 pt-4">
