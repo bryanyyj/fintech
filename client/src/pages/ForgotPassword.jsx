@@ -9,12 +9,23 @@ export default function ForgotPassword() {
   const handleSend = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate sending email
-    setTimeout(() => {
+
+    try {
+      const response = await fetch('http://localhost:3000/api/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to send email');
+
       setSent(true);
+    } catch (err) {
+      alert(err.message);
+    } finally {
       setLoading(false);
-    }, 1200);
-    // In real app, send request to backend here
+    }
   };
 
   return (

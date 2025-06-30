@@ -7,6 +7,8 @@ import register from './register.js';
 import decision from './analyze_decision.js';
 import profile from './save_profile.js';
 import spend from './spending.js';
+import password from './password.js';
+import setting from './setting.js';
 
 // Controllers and middleware
 import { preTokenGenerate, beforeSendToken, showTokenVerified, preCompare, showCompareSuccess, showHashing } from '../controllers/exampleController.js';
@@ -19,6 +21,8 @@ router.use("/register", register);
 router.use("/analyze-decision", decision)
 router.use("/profile", profile)
 router.use("/", spend)
+router.use("/password", password)
+router.use("/settings", setting)
 
 // JWT and bcrypt routes
 router.post("/jwt/generate", preTokenGenerate, generateToken, beforeSendToken, sendToken);

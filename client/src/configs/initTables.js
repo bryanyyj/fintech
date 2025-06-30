@@ -7,14 +7,16 @@ DROP TABLE IF EXISTS budgets;
 DROP TABLE IF EXISTS budget_tracking;
 DROP TABLE IF EXISTS user_profile;
 DROP TABLE IF EXISTS categories;
-DROP TABLE IF EXISTS User;
 DROP TABLE IF EXISTS user_financial_wellness;
+DROP TABLE IF EXISTS User;
 
 CREATE TABLE User (
   user_id INT AUTO_INCREMENT PRIMARY KEY,
-  full_name TEXT,
-  email TEXT,
-  password TEXT
+  full_name VARCHAR(100),
+  email VARCHAR(100) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  reset_token VARCHAR(255) DEFAULT NULL,
+  token_expiry DATETIME DEFAULT NULL
 );
 
 CREATE TABLE user_financial_profiles (

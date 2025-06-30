@@ -33,13 +33,9 @@ const TransactionsPage = () => {
     amount: '',
     category: '',
     description: '',
-<<<<<<< HEAD
-    date: new Date().toISOString().split('T')[0]
-=======
     date: new Date().toISOString().split('T')[0],
     receipt: null,
     type: 'Expense'
->>>>>>> c1b15437eeda4992a08ab5d4e73a6d59e88a7ae6
   });
 
   const expenseCategories = ['Food', 'Transport', 'Shopping', 'Entertainment', 'Bills', 'Health', 'Other'];
@@ -164,13 +160,9 @@ const TransactionsPage = () => {
           amount: '',
           category: '',
           description: '',
-<<<<<<< HEAD
-          date: new Date().toISOString().split('T')[0]
-=======
           date: new Date().toISOString().split('T')[0],
           receipt: null,
           type: 'Expense' // Reset type to default
->>>>>>> c1b15437eeda4992a08ab5d4e73a6d59e88a7ae6
         });
         setShowModal(false);
       })

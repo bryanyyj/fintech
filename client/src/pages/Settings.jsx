@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 
 export default function Settings() {
+  const [currPass, setCurrPass] = useState('');
+  const [newPass, setNewPass] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
+
   const [emailNotif, setEmailNotif] = useState(true);
   const [pushNotif, setPushNotif] = useState(false);
   const [budgetAlerts, setBudgetAlerts] = useState(true);
@@ -12,6 +16,36 @@ export default function Settings() {
   const [dateFormat, setDateFormat] = useState('MM/DD/YYYY');
   const [language, setLanguage] = useState('English');
   const [theme, setTheme] = useState('dark');
+    
+  const handlePasswordChange = async () => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return alert("User not logged in.");
+
+    if (!currPass || !newPass || !confirmPass) return alert("Please fill in all fields.");
+    if (newPass !== confirmPass) return alert("New passwords do not match.");
+
+    try {
+      const res = await fetch('http://localhost:3000/api/settings/password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          currentPassword: currPass,
+          newPassword: newPass
+        })
+      });
+
+      const result = await res.json();
+      if (!res.ok) return alert(`Error: ${result.error}`);
+
+      alert("Password updated successfully.");
+      setCurrPass(''); setNewPass(''); setConfirmPass('');
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update password.");
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
@@ -24,9 +58,27 @@ export default function Settings() {
           <div className="space-y-4">
             <div>
               <label className="block mb-1 font-medium">Change Password</label>
-              <input className="w-full p-2 rounded bg-slate-700 border border-slate-600 mb-2" type="password" placeholder="Current Password" />
-              <input className="w-full p-2 rounded bg-slate-700 border border-slate-600 mb-2" type="password" placeholder="New Password" />
-              <input className="w-full p-2 rounded bg-slate-700 border border-slate-600" type="password" placeholder="Confirm New Password" />
+              <input
+                type="password"
+                placeholder="Current Password"
+                className="w-full p-2 rounded bg-slate-700 border border-slate-600 mb-2"
+                value={currPass}
+                onChange={(e) => setCurrPass(e.target.value)}
+              />
+              <input
+                type="password"
+                placeholder="New Password"
+                className="w-full p-2 rounded bg-slate-700 border border-slate-600 mb-2"
+                value={newPass}
+                onChange={(e) => setNewPass(e.target.value)}
+              />
+              <input
+                type="password"
+                placeholder="Confirm New Password"
+                className="w-full p-2 rounded bg-slate-700 border border-slate-600"
+                value={confirmPass}
+                onChange={(e) => setConfirmPass(e.target.value)}
+              />
             </div>
             <div>
               <label className="block mb-1 font-medium">Profile Picture</label>
@@ -141,7 +193,7 @@ export default function Settings() {
           </div>
         </section>
         <div className="flex justify-center mt-10">
-          <button
+          <button onClick={handlePasswordChange}
             className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold px-8 py-4 rounded-full shadow-lg hover:shadow-blue-500/25 text-lg transition-all"
             style={{maxWidth: '400px'}}>
             Save Changes
