@@ -27,7 +27,8 @@ export const postTransaction = (req, res, next) => {
         amount: req.body.amount,
         category: req.body.category,
         description: req.body.description,
-        transaction_date: req.body.date
+        transaction_date: req.body.date,
+        type: req.body.type
     };
 
     const callback = (error, results, fields) => {

@@ -1,5 +1,5 @@
 // src/pages/Profile.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, Settings, ChevronDown, Plus, MessageCircle, Target, X, PiggyBank, DollarSign, ShoppingCart, TrendingUp, ShieldCheck, BarChart2, Bot, CalendarDays, Info } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import AddTransactionModal from '../components/AddTransactionModal';
@@ -13,16 +13,13 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import axios from "axios";
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend);
 
 export default function Profile() {
   // Dummy data for illustration
   const [score] = useState(78);
-  const [transactions, setTransactions] = useState([
-    { id: 1, desc: "Coffee Shop", amount: -4.5, date: "2024-06-28" },
-    { id: 2, desc: "Grocery Store", amount: -32.8, date: "2024-06-27" },
-    { id: 3, desc: "Salary", amount: 2500, date: "2024-06-25" },
-  ]);
+  const [transactions, setTransactions] = useState([]);
   const [chat, setChat] = useState([
     { from: "ai", text: "How can I help you today?" }
   ]);
@@ -61,8 +58,39 @@ export default function Profile() {
     'Build Emergency Fund', 'Save for Vacation', 'Buy a House', 'Invest for Future', 'Pay Off Debt'
   ];
   const riskLevels = ['Conservative', 'Moderate', 'Aggressive'];
+  const [aiScore, setAiScore] = useState(null);
+  const [aiFeedback, setAiFeedback] = useState("");
+  const [loadingScore, setLoadingScore] = useState(false);
 
   const userAvatar = "https://ui-avatars.com/api/?name=User&background=6d28d9&color=fff&size=128";
+
+  // Always get userId from localStorage and parse as number
+  function getUserId() {
+    const userId = localStorage.getItem('userId');
+    const numericUserId = Number(userId);
+    if (!userId || isNaN(numericUserId)) return null;
+    return numericUserId;
+  }
+
+  useEffect(() => {
+    const numericUserId = getUserId();
+    if (!numericUserId) return;
+    // Fetch recent transactions
+    fetch(`http://localhost:3000/api/transactions?userId=${numericUserId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setTransactions(data);
+      });
+    // Fetch financial wellness score
+    fetch(`http://localhost:3000/api/financial-wellness/${numericUserId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.score !== undefined) {
+          setAiScore(data.score);
+          setAiFeedback(data.feedback);
+        }
+      });
+  }, []);
 
   // Handle chat input
   const sendChat = () => {
@@ -125,6 +153,47 @@ export default function Profile() {
     aiSaved: 420,
     goalsAchieved: 3,
     daysUsing: 180,
+  };
+
+  // Add a function to fetch and score on button click
+  const fetchAndScore = async () => {
+    setLoadingScore(true);
+    setAiScore(null);
+    setAiFeedback("");
+    try {
+      const numericUserId = getUserId();
+      if (!numericUserId) {
+        setAiFeedback("User ID not found or invalid. Please log in again.");
+        setLoadingScore(false);
+        return;
+      }
+      // Use fetch with full URL for consistency
+      const txRes = await fetch(`http://localhost:3000/api/transactions?userId=${numericUserId}`);
+      const transactions = await txRes.json();
+      if (!Array.isArray(transactions)) {
+        setAiFeedback("No transaction array found.");
+        setLoadingScore(false);
+        return;
+      }
+      // Call AI backend with full URL
+      const aiRes = await fetch("http://localhost:8000/api/ai/financial-wellness", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactions })
+      });
+      const aiData = await aiRes.json();
+      setAiScore(aiData.score);
+      setAiFeedback(aiData.feedback);
+      // Save score to backend
+      await fetch('http://localhost:3000/api/financial-wellness', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: numericUserId, score: aiData.score, feedback: aiData.feedback })
+      });
+    } catch (err) {
+      setAiFeedback("Could not calculate score. Please try again later.");
+    }
+    setLoadingScore(false);
   };
 
   return (
@@ -313,22 +382,35 @@ export default function Profile() {
           {/* Financial Wellness Score (always first) */}
           <div className="bg-gray-800 border border-slate-700 rounded-2xl p-8 flex flex-col items-center shadow-lg">
             <div className="text-lg font-semibold mb-2">Financial Wellness Score</div>
-            <div className="relative w-32 h-32 flex items-center justify-center">
-              <svg className="absolute" width="128" height="128">
-                <circle cx="64" cy="64" r="56" stroke="#6366f1" strokeWidth="12" fill="none" opacity="0.2" />
-                <circle
-                  cx="64" cy="64" r="56"
-                  stroke="#a78bfa"
-                  strokeWidth="12"
-                  fill="none"
-                  strokeDasharray={2 * Math.PI * 56}
-                  strokeDashoffset={2 * Math.PI * 56 * (1 - score / 100)}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <span className="text-4xl font-bold">{score}</span>
-            </div>
-            <div className="text-purple-300 mt-2">Great job! Keep improving your score.</div>
+            <button
+              className="mb-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-lg shadow hover:shadow-blue-500/25 transition"
+              onClick={fetchAndScore}
+              disabled={loadingScore}
+            >
+              {loadingScore ? "Calculating..." : "Generate Score"}
+            </button>
+            {loadingScore ? null : aiScore !== null ? (
+              <>
+                <div className="relative w-32 h-32 flex items-center justify-center">
+                  <svg className="absolute" width="128" height="128">
+                    <circle cx="64" cy="64" r="56" stroke="#6366f1" strokeWidth="12" fill="none" opacity="0.2" />
+                    <circle
+                      cx="64" cy="64" r="56"
+                      stroke="#a78bfa"
+                      strokeWidth="12"
+                      fill="none"
+                      strokeDasharray={2 * Math.PI * 56}
+                      strokeDashoffset={2 * Math.PI * 56 * (1 - aiScore / 100)}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <span className="text-4xl font-bold">{aiScore}</span>
+                </div>
+                <div className="text-purple-300 mt-2">{aiFeedback}</div>
+              </>
+            ) : (
+              <div className="text-purple-300">No score available.</div>
+            )}
           </div>
           {/* Goals Box */}
           <div className="bg-gray-800 border border-slate-700 rounded-2xl p-6 shadow-lg">
@@ -348,10 +430,10 @@ export default function Profile() {
             <div className="text-lg font-semibold mb-4">Recent Transactions</div>
             <ul className="divide-y divide-slate-700">
               {transactions.slice(0,5).map(tx => (
-                <li key={tx.id} className="py-2 flex justify-between">
-                  <span>{tx.desc}</span>
-                  <span className={tx.amount < 0 ? "text-red-400" : "text-green-400"}>
-                    {tx.amount < 0 ? "-" : "+"}${Math.abs(tx.amount).toFixed(2)}
+                <li key={tx.transaction_id || tx.id} className="py-2 flex justify-between">
+                  <span>{tx.description}</span>
+                  <span className="text-red-400">
+                    -${Math.abs(tx.amount).toFixed(2)}
                   </span>
                 </li>
               ))}

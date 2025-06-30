@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS budget_tracking;
 DROP TABLE IF EXISTS user_profile;
 DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS User;
+DROP TABLE IF EXISTS user_financial_wellness;
 
 CREATE TABLE User (
   user_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -82,6 +83,15 @@ CREATE TABLE budgets (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
     UNIQUE KEY unique_user_month (user_id, year, month_num),
+    FOREIGN KEY (user_id) REFERENCES user(user_id)
+);
+
+CREATE TABLE user_financial_wellness (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    score INT,
+    feedback TEXT,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES user(user_id)
 );
 

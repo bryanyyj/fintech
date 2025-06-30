@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import ollama
 from util import remove_think_tags
+from typing import List
+import re
 
 MODEL = "deepseek-r1:latest"
 SYSTEM_PROMPT = (
@@ -35,6 +37,9 @@ app.add_middleware(
 class ChatRequest(BaseModel):
     message: str
 
+class FinancialWellnessRequest(BaseModel):
+    transactions: List[dict]
+
 @app.post("/chat")
 async def chat_endpoint(req: ChatRequest):
     prompt = f"{SYSTEM_PROMPT}\nUser: {req.message}\nAdvisor:"
@@ -42,3 +47,30 @@ async def chat_endpoint(req: ChatRequest):
     response = result["response"]
     cleaned_response = remove_think_tags(response)
     return {"response": cleaned_response}
+
+@app.post("/api/ai/financial-wellness")
+async def financial_wellness_endpoint(req: FinancialWellnessRequest):
+    prompt = (
+        "You are a financial wellness AI. Given the user's transaction history below, "
+        "analyze their financial wellness and return a JSON with a 'score' (0-100) and a short 'feedback' string. "
+        "Be concise and supportive.\n"
+        f"Transactions: {req.transactions}\n"
+        "Respond ONLY with a JSON object like: {\"score\": 78, \"feedback\": \"Your finances are improving!\"}"
+    )
+    result = ollama.generate(model=MODEL, prompt=prompt)
+    response = result["response"]
+    # Try to extract JSON from the response
+    import json
+    try:
+        match = re.search(r'\{.*\}', response, re.DOTALL)
+        if match:
+            data = json.loads(match.group(0))
+            score = data.get("score")
+            feedback = data.get("feedback")
+        else:
+            score = None
+            feedback = "AI did not return a valid score."
+    except Exception:
+        score = None
+        feedback = "AI could not process your data."
+    return {"score": score, "feedback": feedback}

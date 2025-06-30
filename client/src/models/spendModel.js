@@ -14,12 +14,20 @@ export const getTransactions = (data, callback) =>
 
 export const insertBudget = (data, callback) =>
 {
+<<<<<<< HEAD
     const SQLSTATEMENT = `
         INSERT INTO budgets (user_id, year, month_num, budget_amount)
         VALUES (?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE budget_amount = VALUES(budget_amount);
     `;
     const VALUES = [data.userId, data.year, data.month_num, data.budget_amount];
+=======
+    const SQLSTATMENT = `
+    INSERT INTO budgets (user_id, year, month, budget_amount, type)
+    VALUES (?, ?, ?, ?,?);
+    `;
+    const VALUES = [data.userId, data.year, data.month, data.budget_amount, data.type];
+>>>>>>> c1b15437eeda4992a08ab5d4e73a6d59e88a7ae6
 
     pool.query(SQLSTATEMENT, VALUES, callback);
 }
