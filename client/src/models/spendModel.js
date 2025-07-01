@@ -8,7 +8,15 @@ export const getTransactions = (data, callback) =>
     `;
     
     const VALUES = [data.userId]
-    pool.query(SQLSTATEMENT, VALUES, callback);
+    console.log('Fetching transactions for user:', data.userId);
+    
+    pool.query(SQLSTATEMENT, VALUES, (error, results, fields) => {
+        console.log('Database query results:', results);
+        if (results && results.length > 0) {
+            console.log('First transaction type:', results[0].type);
+        }
+        callback(error, results, fields);
+    });
 }
 
 
@@ -27,11 +35,17 @@ export const insertBudget = (data, callback) =>
 
 export const insertTransaction = (data, callback) =>
 {
+    console.log('Model received data:', data);
+    console.log('Model type field:', data.type);
+    
     const SQLSTATEMENT = `
-        INSERT INTO transactions (user_id, amount, category, description, transaction_date)
-        VALUES (?, ?, ?, ?, ?);
+        INSERT INTO transactions (user_id, amount, category, description, transaction_date, type)
+        VALUES (?, ?, ?, ?, ?, ?);
     `;
-    const VALUES = [data.userId, data.amount, data.category, data.description, data.transaction_date];
+    const VALUES = [data.userId, data.amount, data.category, data.description, data.transaction_date, data.type];
+    
+    console.log('Model SQL statement:', SQLSTATEMENT);
+    console.log('Model VALUES:', VALUES);
 
     pool.query(SQLSTATEMENT, VALUES, callback);
 }

@@ -28,6 +28,7 @@ const TransactionsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredTransactions, setFilteredTransactions] = useState(transactions);
+  const [viewMode, setViewMode] = useState('Expenses'); // 'Expenses', 'Income', 'All'
 
   const [newTransaction, setNewTransaction] = useState({
     amount: '',
@@ -41,6 +42,7 @@ const TransactionsPage = () => {
   const expenseCategories = ['Food', 'Transport', 'Shopping', 'Entertainment', 'Bills', 'Health', 'Other'];
   const incomeCategories = ['Salary', 'Bonus', 'Investment', 'Gift', 'Other'];
   const allCategories = ['All', ...expenseCategories];
+  const allIncomeCategories = ['All', ...incomeCategories];
   const periods = ['This Month', 'Last 3 Months', 'All Time'];
 
   const navigate = useNavigate();
@@ -80,26 +82,65 @@ const TransactionsPage = () => {
     }
   }, [location.state]);
 
-  // Calculate summary data
-  const totalThisMonth = filteredTransactions.reduce(
-    (sum, t) => sum + parseFloat(t.amount || 0), 0
+  // Separate transactions by type
+  const expenseTransactions = filteredTransactions.filter(t => 
+    !t.type || t.type.toLowerCase() === 'expense'
+  );
+  const incomeTransactions = filteredTransactions.filter(t => 
+    t.type && t.type.toLowerCase() === 'income'
   );
 
-  const categoryTotals = filteredTransactions.reduce((acc, t) => {
-    const category = t.category;
-    acc[category] = (acc[category] || 0) + parseFloat(t.amount || 0);
-    return acc;
-  }, {});
+  // Debug: Log transaction types to console
+  useEffect(() => {
+    if (transactions.length > 0) {
+      console.log('All transactions:', transactions);
+      console.log('Transaction types found:', [...new Set(transactions.map(t => t.type))]);
+      console.log('Expense transactions:', expenseTransactions);
+      console.log('Income transactions:', incomeTransactions);
+    }
+  }, [transactions, expenseTransactions, incomeTransactions]);
+
+  // Calculate summary data based on view mode
+  const getTotalAmount = (transactions) => {
+    return transactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+  };
+
+  const totalExpenses = getTotalAmount(expenseTransactions);
+  const totalIncome = getTotalAmount(incomeTransactions);
+  const netAmount = totalIncome - totalExpenses;
+
+  const getCategoryTotals = (transactions) => {
+    return transactions.reduce((acc, t) => {
+      const category = t.category;
+      acc[category] = (acc[category] || 0) + parseFloat(t.amount || 0);
+      return acc;
+    }, {});
+  };
+
+  const expenseCategoryTotals = getCategoryTotals(expenseTransactions);
+  const incomeCategoryTotals = getCategoryTotals(incomeTransactions);
   
-  const remainingBudget = 3500 - totalThisMonth; // Assuming 3500 budget
-  const topCategory = Object.keys(categoryTotals).reduce((a, b) => 
-    categoryTotals[a] > categoryTotals[b] ? a : b, 'Food'
+  const remainingBudget = 3500 - totalExpenses; // Budget minus expenses only
+  const topExpenseCategory = Object.keys(expenseCategoryTotals).reduce((a, b) => 
+    expenseCategoryTotals[a] > expenseCategoryTotals[b] ? a : b, 'Food'
   );
-  const topCategoryPercentage = Math.round((categoryTotals[topCategory] / totalThisMonth) * 100) || 0;
+  const topExpenseCategoryPercentage = Math.round((expenseCategoryTotals[topExpenseCategory] / totalExpenses) * 100) || 0;
 
-  // Filter transactions based on search and filters
+  const topIncomeCategory = Object.keys(incomeCategoryTotals).reduce((a, b) => 
+    incomeCategoryTotals[a] > incomeCategoryTotals[b] ? a : b, 'Salary'
+  );
+  const topIncomeCategoryPercentage = Math.round((incomeCategoryTotals[topIncomeCategory] / totalIncome) * 100) || 0;
+
+  // Filter transactions based on search, filters, and view mode
   useEffect(() => {
     let filtered = transactions;
+    
+    // Filter by view mode
+    if (viewMode === 'Expenses') {
+      filtered = filtered.filter(t => !t.type || t.type.toLowerCase() === 'expense');
+    } else if (viewMode === 'Income') {
+      filtered = filtered.filter(t => t.type && t.type.toLowerCase() === 'income');
+    }
     
     if (selectedCategory !== 'All') {
       filtered = filtered.filter(t => t.category === selectedCategory);
@@ -113,7 +154,12 @@ const TransactionsPage = () => {
     }
     
     setFilteredTransactions(filtered);
-  }, [transactions, selectedCategory, searchTerm]);
+  }, [transactions, selectedCategory, searchTerm, viewMode]);
+
+  // Reset category filter when view mode changes
+  useEffect(() => {
+    setSelectedCategory('All');
+  }, [viewMode]);
 
   const handleAddTransaction = () => {
     // Validate all required fields
@@ -148,6 +194,9 @@ const TransactionsPage = () => {
       type: newTransaction.type // Ensure type is included
     };
 
+    console.log('Frontend sending payload:', payload);
+    console.log('Transaction type being sent:', newTransaction.type);
+
     fetch(`http://localhost:3000/api/transactions?userId=${userId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -155,6 +204,7 @@ const TransactionsPage = () => {
     })
       .then(res => res.json())
       .then(data => {
+        console.log('Backend response:', data);
         setTransactions([data, ...transactions]);
         setNewTransaction({
           amount: '',
@@ -169,41 +219,93 @@ const TransactionsPage = () => {
       .catch(err => console.error('Failed to add transaction:', err));
   };
 
-  // Prepare data for Pie Chart (Spending by Category)
-  const pieData = {
-    labels: Object.keys(categoryTotals),
-    datasets: [
-      {
-        data: Object.values(categoryTotals),
-        backgroundColor: [
-          '#6366f1', '#f59e42', '#10b981', '#f43f5e', '#a78bfa', '#fbbf24', '#14b8a6', '#eab308',
+  // Prepare data for Pie Chart based on view mode
+  const getPieData = () => {
+    let categoryTotals, title;
+    
+    if (viewMode === 'Expenses') {
+      categoryTotals = expenseCategoryTotals;
+      title = 'Spending by Category';
+    } else if (viewMode === 'Income') {
+      categoryTotals = incomeCategoryTotals;
+      title = 'Income by Category';
+    } else {
+      // For 'All' view, show expenses only in pie chart for clarity
+      categoryTotals = expenseCategoryTotals;
+      title = 'Spending by Category';
+    }
+
+    return {
+      title,
+      data: {
+        labels: Object.keys(categoryTotals),
+        datasets: [
+          {
+            data: Object.values(categoryTotals),
+            backgroundColor: [
+              '#6366f1', '#f59e42', '#10b981', '#f43f5e', '#a78bfa', '#fbbf24', '#14b8a6', '#eab308',
+            ],
+            borderWidth: 1,
+          },
         ],
-        borderWidth: 1,
-      },
-    ],
+      }
+    };
   };
 
-  // Prepare data for Bar Chart (Spending by Date)
-  const spendingByDate = filteredTransactions.reduce((acc, t) => {
-  const dateKey = t.transaction_date || t.date;
-    if (!dateKey) return acc;
+  // Prepare data for Bar Chart based on view mode
+  const getBarData = () => {
+    let transactions, title, label;
+    
+    if (viewMode === 'Expenses') {
+      transactions = expenseTransactions;
+      title = 'Spending Over Time';
+      label = 'Spending';
+    } else if (viewMode === 'Income') {
+      transactions = incomeTransactions;
+      title = 'Income Over Time';
+      label = 'Income';
+    } else {
+      // For 'All' view, show expenses only in bar chart for clarity
+      transactions = expenseTransactions;
+      title = 'Spending Over Time';
+      label = 'Spending';
+    }
 
-    const amount = parseFloat(t.amount || 0); // ✅ convert to number
-    acc[dateKey] = (acc[dateKey] || 0) + amount;
-    return acc;
-  }, {});
+    const spendingByDate = transactions.reduce((acc, t) => {
+      const dateKey = t.transaction_date || t.date;
+      if (!dateKey) return acc;
 
-  const barData = {
-    labels: Object.keys(spendingByDate).sort(),
-    datasets: [
-      {
-        label: 'Spending',
-        data: Object.keys(spendingByDate).sort().map(date => spendingByDate[date]),
-        backgroundColor: '#6366f1',
-      },
-    ],
+      const amount = parseFloat(t.amount || 0);
+      acc[dateKey] = (acc[dateKey] || 0) + amount;
+      return acc;
+    }, {});
+
+    return {
+      title,
+      data: {
+        labels: Object.keys(spendingByDate).sort(),
+        datasets: [
+          {
+            label: label,
+            data: Object.keys(spendingByDate).sort().map(date => spendingByDate[date]),
+            backgroundColor: viewMode === 'Income' ? '#10b981' : '#6366f1',
+          },
+        ],
+      }
+    };
   };
 
+  const pieChartData = getPieData();
+  const barChartData = getBarData();
+
+  // Get current category list based on view mode
+  const getCurrentCategories = () => {
+    if (viewMode === 'Income') {
+      return allIncomeCategories;
+    } else {
+      return allCategories;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -225,6 +327,23 @@ const TransactionsPage = () => {
             </button>
             
             <div className="flex flex-wrap items-center gap-4">
+              {/* View Mode Toggle */}
+              <div className="flex bg-gray-700 rounded-lg p-1">
+                {['Expenses', 'Income', 'All'].map(mode => (
+                  <button
+                    key={mode}
+                    onClick={() => setViewMode(mode)}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      viewMode === mode 
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-300 hover:text-white'
+                    }`}
+                  >
+                    {mode}
+                  </button>
+                ))}
+              </div>
+
               {/* Time Filter */}
               <select 
                 value={filterPeriod}
@@ -238,7 +357,7 @@ const TransactionsPage = () => {
 
               {/* Category Filter */}
               <div className="flex flex-wrap gap-2">
-                {allCategories.map(category => (
+                {getCurrentCategories().map(category => (
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
@@ -271,10 +390,10 @@ const TransactionsPage = () => {
         {/* Charts Section */}
         <div className="flex flex-col md:flex-row gap-6 mb-8">
           <div className="bg-gray-800 p-4 rounded-lg flex flex-col items-center h-64 w-full md:w-1/2">
-            <h3 className="text-lg font-semibold mb-2 text-center">Spending by Category</h3>
+            <h3 className="text-lg font-semibold mb-2 text-center">{pieChartData.title}</h3>
             <div className="w-full h-full flex items-center justify-center">
               <Pie 
-                data={pieData} 
+                data={pieChartData.data} 
                 options={{ 
                   responsive: true, 
                   maintainAspectRatio: false, 
@@ -289,10 +408,10 @@ const TransactionsPage = () => {
             </div>
           </div>
           <div className="bg-gray-800 p-4 rounded-lg flex flex-col items-center h-64 w-full md:w-1/2">
-            <h3 className="text-lg font-semibold mb-2 text-center">Spending Over Time</h3>
+            <h3 className="text-lg font-semibold mb-2 text-center">{barChartData.title}</h3>
             <div className="w-full h-full flex items-center justify-center">
               <Bar 
-                data={barData} 
+                data={barChartData.data} 
                 options={{ 
                   responsive: true, 
                   maintainAspectRatio: false, 
@@ -315,16 +434,32 @@ const TransactionsPage = () => {
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="bg-gray-800 p-4 rounded-lg">
-            <h3 className="text-gray-400 text-sm mb-1">Total This Month</h3>
-            <p className="text-2xl font-bold text-green-400">${totalThisMonth.toFixed(2)}</p>
+            <h3 className="text-gray-400 text-sm mb-1">
+              {viewMode === 'Income' ? 'Total Income' : viewMode === 'Expenses' ? 'Total Expenses' : 'Net Amount'}
+            </h3>
+            <p className={`text-2xl font-bold ${
+              viewMode === 'Income' ? 'text-green-400' : 
+              viewMode === 'Expenses' ? 'text-red-400' : 
+              netAmount >= 0 ? 'text-green-400' : 'text-red-400'
+            }`}>
+              ${viewMode === 'Income' ? totalIncome.toFixed(2) : 
+                viewMode === 'Expenses' ? totalExpenses.toFixed(2) : 
+                netAmount.toFixed(2)}
+            </p>
           </div>
           <div className="bg-gray-800 p-4 rounded-lg">
             <h3 className="text-gray-400 text-sm mb-1">Remaining Budget</h3>
             <p className="text-2xl font-bold text-blue-400">${remainingBudget.toFixed(2)}</p>
           </div>
           <div className="bg-gray-800 p-4 rounded-lg">
-            <h3 className="text-gray-400 text-sm mb-1">Top Category</h3>
-            <p className="text-2xl font-bold text-purple-400">{topCategory} ({topCategoryPercentage}%)</p>
+            <h3 className="text-gray-400 text-sm mb-1">
+              {viewMode === 'Income' ? 'Top Income Category' : 'Top Expense Category'}
+            </h3>
+            <p className="text-2xl font-bold text-purple-400">
+              {viewMode === 'Income' ? 
+                `${topIncomeCategory} (${topIncomeCategoryPercentage}%)` : 
+                `${topExpenseCategory} (${topExpenseCategoryPercentage}%)`}
+            </p>
           </div>
           <div className="bg-gray-800 p-4 rounded-lg">
             <h3 className="text-gray-400 text-sm mb-1">Days Left</h3>
@@ -339,6 +474,7 @@ const TransactionsPage = () => {
               <thead className="bg-gray-700">
                 <tr>
                   <th className="text-left p-4 font-semibold">Date</th>
+                  <th className="text-left p-4 font-semibold">Type</th>
                   <th className="text-left p-4 font-semibold">Amount</th>
                   <th className="text-left p-4 font-semibold">Category</th>
                   <th className="text-left p-4 font-semibold">Description</th>
@@ -347,7 +483,7 @@ const TransactionsPage = () => {
               <tbody>
                 {filteredTransactions.filter(t => t && t.amount !== undefined && t.category && (t.transaction_date || t.date)).length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="text-center text-gray-400 py-8">
+                    <td colSpan={5} className="text-center text-gray-400 py-8">
                       No transactions found.
                     </td>
                   </tr>
@@ -357,7 +493,16 @@ const TransactionsPage = () => {
                     .map((transaction, index) => (
                       <tr key={transaction.id || index} className={`border-t border-gray-700 ${index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-750'}`}>
                         <td className="p-4 text-gray-300">{transaction.transaction_date || transaction.date ? new Date(transaction.transaction_date || transaction.date).toLocaleDateString() : ""}</td>
-                        <td className="p-4 font-semibold text-red-400">
+                        <td className="p-4">
+                          <span className={`px-2 py-1 rounded text-sm ${
+                            transaction.type && transaction.type.toLowerCase() === 'income' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+                          }`}>
+                            {transaction.type || 'Unknown'}
+                          </span>
+                        </td>
+                        <td className={`p-4 font-semibold ${
+                          transaction.type && transaction.type.toLowerCase() === 'income' ? 'text-green-400' : 'text-red-400'
+                        }`}>
                           ${parseFloat(transaction.amount || 0).toFixed(2)}
                         </td>
                         <td className="p-4">

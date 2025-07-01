@@ -71,6 +71,7 @@ CREATE TABLE transactions (
     category TEXT NOT NULL,
     description TEXT,
     transaction_date DATE NOT NULL,
+    type ENUM('Expense', 'Income') DEFAULT 'Expense',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (user_id) REFERENCES user(user_id)
