@@ -17,6 +17,7 @@ import {
   Title,
 } from 'chart.js';
 import axios from "axios";
+
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, BarElement, ArcElement, Title);
 
 export default function Profile() {
@@ -71,6 +72,8 @@ export default function Profile() {
 
   const [showScoreModal, setShowScoreModal] = useState(false);
 
+  const [profileData, setProfileData] = useState(null);
+
   // Always get userId from localStorage and parse as number
   function getUserId() {
     const userId = localStorage.getItem('userId');
@@ -82,7 +85,7 @@ export default function Profile() {
   useEffect(() => {
     const numericUserId = getUserId();
     if (!numericUserId) return;
-    // Fetch user profile
+    // Fetch user profile (for display)
     fetch(`http://localhost:3000/api/user?userId=${numericUserId}`)
       .then(res => res.json())
       .then(data => {
@@ -93,9 +96,14 @@ export default function Profile() {
             email: data.email || p.email,
             // phone and picture are not in your user table, so keep as is or remove
           }));
-          // If you add a picture field to your user table, handle it here
-          // if (data.picture) setProfilePicPreview(data.picture);
         }
+      });
+    // Fetch financial profile (for AI)
+    fetch(`http://localhost:3000/api/profile?userId=${numericUserId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) setProfileData(data[0]);
+        else if (typeof data === 'object') setProfileData(data);
       });
     // Fetch recent transactions
     fetch(`http://localhost:3000/api/transactions?userId=${numericUserId}`)
@@ -264,11 +272,11 @@ export default function Profile() {
         setLoadingScore(false);
         return;
       }
-      // Only one call now, since backend returns both concise and detailed
+      // Pass profileData to the AI endpoint
       const aiRes = await fetch("http://localhost:8000/api/ai/financial-wellness", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transactions })
+        body: JSON.stringify({ transactions, profile: profileData })
       });
       const aiData = await aiRes.json();
       setAiScore(aiData.score);

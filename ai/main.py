@@ -18,10 +18,6 @@ SYSTEM_PROMPT = (
     "- Friendly, supportive, and non-judgmental language.\n"
     "If the user's input is unclear, ask clarifying questions before giving advice.\n"
     "ALWAYS keep your answer short, concise, and to the point. Do NOT write long paragraphs or lists.\n"
-    "ALWAYS output your response in this exact format, with each section on a new line and nothing else before or after:\n"
-    "Score: [number]/10\n"
-    "Reason: [concise explanation]\n"
-    "Tip: [concise advice]"
 )
 app = FastAPI()
 
@@ -40,6 +36,7 @@ class ChatRequest(BaseModel):
 class FinancialWellnessRequest(BaseModel):
     transactions: List[dict]
     mode: Optional[str] = "concise"  # 'concise' or 'detailed'
+    profile: Optional[dict] = None
 
 @app.post("/chat")
 async def chat_endpoint(req: ChatRequest):
@@ -53,12 +50,24 @@ async def chat_endpoint(req: ChatRequest):
 async def financial_wellness_endpoint(req: FinancialWellnessRequest):
     import json
 
+    profile_str = ""
+    if req.profile:
+        profile_fields = [
+            'monthly_income', 'age_group', 'occupation', 'num_dependents',
+            'rent_mortgage', 'utilities', 'insurance', 'loan_payments',
+            'total_fixed', 'disposable_income',
+            'rank_food', 'rank_transport', 'rank_entertainment', 'rank_shopping', 'rank_travel', 'rank_health', 'rank_education',
+            'goal_type', 'target_amount', 'timeline_months', 'risk_tolerance', 'current_savings'
+        ]
+        summary = {k: v for k, v in req.profile.items() if k in profile_fields}
+        profile_str = f"User Profile: {summary}\n"
+
     # Concise prompt
     concise_prompt = (
-        "You are a financial wellness AI. Given the user's transaction history below, "
+        "You are a financial wellness AI. Given the user's transaction history and profile below, "
         "analyze their financial wellness and return a JSON with a 'score' (0-100) and a short 'feedback' string. "
         "Be concise and supportive.\n"
-        f"Transactions: {req.transactions}\n"
+        f"{profile_str}Transactions: {req.transactions}\n"
         "Respond ONLY with a JSON object like: {\"score\": 78, \"feedback\": \"Your finances are improving!\"}"
     )
     concise_result = ollama.generate(model=MODEL, prompt=concise_prompt)
@@ -78,7 +87,7 @@ async def financial_wellness_endpoint(req: FinancialWellnessRequest):
 
     # Detailed prompt
     detailed_prompt = (
-        "You are a financial wellness AI. Given the user's transaction history below, "
+        "You are a financial wellness AI. Given the user's transaction history and profile below, "
         "analyze their financial wellness and return a JSON with a 'score' (0-100) and a 'feedback' string. "
         "The feedback should be DETAILED and THOROUGH. Include:\n"
         "- Observations about spending and saving habits\n"
@@ -87,10 +96,10 @@ async def financial_wellness_endpoint(req: FinancialWellnessRequest):
         "- Actionable, specific advice for improvement\n"
         "- Encouragement and next steps\n"
         "Be friendly, supportive, and non-judgmental, but provide as much useful information as possible.\n"   
-        "Analyze the following transactions and provide a detailed financial wellness feedback. "
+        "Analyze the following transactions and profile and provide a detailed financial wellness feedback. "
         "Keep your response concise—no more than 5-7 sentences or about 500 words. "
         "Avoid excessive detail, and focus on the most important insights and actionable advice.\n\n"
-        f"Transactions: {req.transactions}\n"
+        f"{profile_str}Transactions: {req.transactions}\n"
         "Respond ONLY with a JSON object like: {\"score\": 78, \"feedback\": \"[detailed review here]\"}"
     )
     detailed_result = ollama.generate(model=MODEL, prompt=detailed_prompt)
