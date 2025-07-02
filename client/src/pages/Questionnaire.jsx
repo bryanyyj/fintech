@@ -55,47 +55,57 @@ export default function Questionnaire() {
       return;
     }
 
+    // Map frontend fields to backend expected fields (profileMiddleware.js)
     const profileData = {
-      user_id: userId, // Include it in the payload
-      ...form,
+      user_id: userId,
+      income: form.income,
+      age: form.age,
+      occupation: form.occupation,
+      dependents: form.dependents,
+      location: form.location,
+      rent: form.rent,
+      utilities: form.utilities,
+      insurance: form.insurance,
+      loan: form.loan,
+      otherFixed: form.otherFixed,
+      food: form.food,
+      transport: form.transport,
+      entertainment: form.entertainment,
+      shopping: form.shopping,
+      travel: form.travel,
+      health: form.health,
+      education: form.education,
+      goal: form.goal,
+      goalAmount: form.goalAmount,
+      timeline: form.timeline,
+      risk: form.risk,
+      savings: form.savings,
       spendingPriorities,
       completedAt: new Date().toISOString()
     };
 
     try {
-        // Step 1: Check if profile exists
-        const checkResponse = await fetch(`http://localhost:3000/api/profile?userId=${userId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
+      const submitResponse = await fetch('http://localhost:3000/api/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(profileData)
+      });
 
-        // Step 2: If found, use PUT to update; else, use POST to create
-        const method = checkResponse.ok ? 'PUT' : 'POST';
-
-        const submitResponse = await fetch('http://localhost:3000/api/profile', {
-          method,
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify(profileData)
-        });
-
-        if (!submitResponse.ok) {
-          throw new Error('Failed to submit profile');
-        }
-
-        const result = await submitResponse.json();
-        console.log('Profile saved:', result);
-        setStep(6); // Go to completion screen
-      } catch (error) {
-        console.error('Error submitting profile:', error);
-        alert('There was a problem saving your profile.');
+      if (!submitResponse.ok) {
+        throw new Error('Failed to submit profile');
       }
-    };
 
+      const result = await submitResponse.json();
+      console.log('Profile saved:', result);
+      setStep(6); // Go to completion screen
+    } catch (error) {
+      console.error('Error submitting profile:', error);
+      alert('There was a problem saving your profile.');
+    }
+  };
 
   const getStepIcon = (stepNum) => {
     const icons = {

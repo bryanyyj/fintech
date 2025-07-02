@@ -28,7 +28,7 @@ const TransactionsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredTransactions, setFilteredTransactions] = useState(transactions);
-  const [viewMode, setViewMode] = useState('Expenses'); // 'Expenses', 'Income', 'All'
+  const [viewMode, setViewMode] = useState('All'); // 'Expenses', 'Income', 'All'
 
   const [newTransaction, setNewTransaction] = useState({
     amount: '',

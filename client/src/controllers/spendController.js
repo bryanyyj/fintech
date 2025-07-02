@@ -21,10 +21,6 @@ export const getTransactionData = (req, res, next) => {
 };
 
 export const postTransaction = (req, res, next) => {
-
-    console.log('Backend received request body:', req.body);
-    console.log('Backend received type:', req.body.type);
-
     const data = {
         userId: req.query.userId,
         amount: req.body.amount,
@@ -34,15 +30,12 @@ export const postTransaction = (req, res, next) => {
         type: req.body.type
     };
 
-    console.log('Backend processed data:', data);
-
     const callback = (error, results, fields) => {
         if (error) {
             console.error("Error posting transaction data:", error);
             return res.status(500).json({ error: "Internal server error" });
         }
 
-        console.log('Backend database results:', results);
         return res.status(201).json(data);
     };
 

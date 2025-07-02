@@ -22,7 +22,7 @@ export default function Sidebar() {
     localStorage.removeItem('currentUser');
     localStorage.removeItem('userId');
     localStorage.removeItem('token');
-    navigate('/login', { replace: true });
+    navigate('/', { replace: true });
   };
 
   // List of nav items for easier mapping

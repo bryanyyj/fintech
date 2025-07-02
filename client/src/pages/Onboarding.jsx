@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const occupations = [
   'Student', 'Engineer', 'Teacher', 'Doctor', 'Nurse', 'Designer', 'Developer', 'Manager', 'Sales', 'Finance', 'Other'
@@ -26,6 +27,7 @@ function Progress({step, total}) {
 }
 
 export default function Onboarding() {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     income: 3000,
@@ -266,7 +268,87 @@ export default function Onboarding() {
             <div className="mb-4"><label>Current Savings Amount ($)</label><input name="savings" value={form.savings} onChange={handleChange} type="number" className="w-full p-2 rounded bg-slate-700 border border-slate-600" /></div>
             <div className="flex justify-between mt-8">
               <button className="text-gray-400" onClick={()=>setStep(4)}>Back</button>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold" onClick={handleStep5Continue}>Finish</button>
+              <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold" onClick={async ()=>{
+                handleStep5Continue();
+                if (
+                  form.goal &&
+                  form.targetAmount &&
+                  form.targetMonths &&
+                  form.risk &&
+                  form.savings
+                ) {
+                  // POST profile
+                  const userId = localStorage.getItem('userId');
+                  if (!userId) {
+                    setError('User ID not found. Please log in again.');
+                    return;
+                  }
+                  // Calculate total_fixed and disposable_income
+                  const total_fixed = [form.rent, form.utilities, form.insurance, form.loans, form.otherFixed]
+                    .map(Number).filter(Boolean).reduce((a,b)=>a+b,0);
+                  const disposable_income = Number(form.income) - total_fixed;
+                  // Map priorities to rank fields
+                  const rankFields = {
+                    rank_food: null,
+                    rank_transport: null,
+                    rank_entertainment: null,
+                    rank_shopping: null,
+                    rank_travel: null,
+                    rank_health: null,
+                    rank_education: null
+                  };
+                  (form.priorities || []).forEach((item, idx) => {
+                    const rank = idx + 1;
+                    if (item.includes('Food')) rankFields.rank_food = rank;
+                    else if (item.includes('Transport')) rankFields.rank_transport = rank;
+                    else if (item.includes('Entertainment')) rankFields.rank_entertainment = rank;
+                    else if (item.includes('Shopping')) rankFields.rank_shopping = rank;
+                    else if (item.includes('Travel')) rankFields.rank_travel = rank;
+                    else if (item.includes('Health')) rankFields.rank_health = rank;
+                    else if (item.includes('Education')) rankFields.rank_education = rank;
+                  });
+                  const profileData = {
+                    user_id: userId,
+                    monthly_income: form.income,
+                    age_group: form.age,
+                    occupation: form.occupation,
+                    num_dependents: form.dependents,
+                    city: form.city,
+                    rent_mortgage: form.rent,
+                    utilities: form.utilities,
+                    insurance: form.insurance,
+                    loan_payments: form.loans,
+                    other_fixed: form.otherFixed,
+                    total_fixed,
+                    disposable_income,
+                    spend_food: form.spendFood,
+                    spend_transport: form.spendTransport,
+                    spend_entertainment: form.spendEntertainment,
+                    spend_shopping: form.spendShopping,
+                    spend_travel: 0,
+                    spend_health: 0,
+                    spend_education: 0,
+                    ...rankFields,
+                    goal_type: form.goal,
+                    target_amount: form.targetAmount,
+                    timeline_months: form.targetMonths,
+                    risk_tolerance: form.risk,
+                    current_savings: form.savings
+                  };
+                  try {
+                    const res = await fetch('http://localhost:3000/api/profile', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
+                      body: JSON.stringify(profileData)
+                    });
+                    if (!res.ok) throw new Error('Failed to submit profile');
+                    setStep(6);
+                  } catch (err) {
+                    setError('There was a problem saving your profile.');
+                  }
+                }
+              }}>Finish</button>
             </div>
           </>
         )}
@@ -288,7 +370,7 @@ export default function Onboarding() {
                 <div>Food: ${form.spendFood}, Transport: ${form.spendTransport}, Entertainment: ${form.spendEntertainment}, Shopping: ${form.spendShopping}</div>
                 <div>Goal: {form.goal}, Target: ${form.targetAmount} in {form.targetMonths} months, Risk: {form.risk}, Savings: ${form.savings}</div>
               </div>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold mt-4" onClick={()=>window.location.href='/home'}>Go to Dashboard</button>
+              <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold mt-4" onClick={()=>navigate('/home', { replace: true })}>Go to Dashboard</button>
               <div className="mt-6 text-gray-400">Tip: You can update your profile and goals anytime in Settings.</div>
             </div>
           </>

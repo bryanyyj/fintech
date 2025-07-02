@@ -15,11 +15,20 @@ export default function Login() {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then(res => res.json())
-        .then(data => {
+        .then(async data => {
           if (data.userId) {
             localStorage.setItem("userId", data.userId)
             localStorage.setItem("isLoggedIn", "true")
-            navigate("/home", { replace: true })
+            // Check for financial profile
+            const profileCheck = await fetch(`http://localhost:3000/api/profile?userId=${data.userId}`, {
+              method: "GET",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
+            });
+            if (profileCheck.ok) {
+              navigate("/home", { replace: true })
+            } else {
+              navigate("/onboarding", { replace: true })
+            }
           } else {
             // bad token → clear
             localStorage.removeItem("token")
@@ -38,7 +47,6 @@ export default function Login() {
   const handleLogin = async formData => {
     const { email, password } = formData
 
-    // 1. Try backend login
     try {
       const response = await fetch("http://localhost:3000/api/login", {
         method: "POST",
@@ -61,35 +69,24 @@ export default function Login() {
         if (vr.ok) {
           const vd = await vr.json()
           if (vd.userId) localStorage.setItem("userId", vd.userId)
-        }
 
-        navigate("/home", { replace: true })
-        return
+          // Check for financial profile
+          const profileCheck = await fetch(`http://localhost:3000/api/profile?userId=${vd.userId}`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.token}` }
+          });
+
+          if (profileCheck.ok) {
+            navigate("/home", { replace: true })
+          } else {
+            navigate("/onboarding", { replace: true })
+          }
+        }
+      } else {
+        alert("Invalid email or password.")
       }
     } catch (err) {
-      console.warn("Backend login failed, falling back to localStorage…", err)
-    }
-
-    // 2. Fallback: localStorage-based users
-    const users = JSON.parse(localStorage.getItem("users") || "[]")
-    const user = users.find(u => u.email === email && u.password === password)
-    if (user) {
-      // Ensure userId is an integer
-      let userId = user.userId;
-      if (!userId || isNaN(parseInt(userId, 10))) {
-        // Assign a new integer userId if missing or invalid
-        userId = Date.now();
-        user.userId = userId;
-        // Update users array in localStorage
-        const updatedUsers = users.map(u => u.email === email ? { ...u, userId } : u);
-        localStorage.setItem("users", JSON.stringify(updatedUsers));
-      }
-      localStorage.setItem("isLoggedIn", "true")
-      localStorage.setItem("currentUser", email)
-      localStorage.setItem("userId", parseInt(userId, 10))
-      navigate("/home", { replace: true })
-    } else {
-      alert("Invalid email or password.")
+      alert("Login failed. Please try again.")
     }
   }
 

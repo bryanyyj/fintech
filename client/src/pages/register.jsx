@@ -44,7 +44,7 @@ export default function Register() {
         }
 
         alert(data.message || "Registration successful!")
-        navigate("/onboarding", { replace: true })
+        navigate("/login", { replace: true })
         return
       } else {
         alert(data.message || "Registration failed on server.")
@@ -73,8 +73,8 @@ export default function Register() {
     localStorage.setItem("currentUser", email)
     localStorage.setItem("userId", userId)
 
-    alert("Registration saved locally! You are now logged in.")
-    navigate("/onboarding", { replace: true })
+    alert("Registration saved locally! You are now ready to log in.")
+    navigate("/login", { replace: true })
   }
 
   return (
