@@ -77,7 +77,7 @@ export default function Landing() {
                   <div key={i} className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full border-2 border-slate-900"></div>
                 ))}
               </div>
-              <span className="text-sm">Join 10,000+ smart spenders</span>
+              <span className="text-sm">Be among the first to join</span>
             </div>
           </div>
         </div>

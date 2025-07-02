@@ -24,6 +24,7 @@ import Feedback       from './pages/Feedback.jsx'
 import BudgetTracker  from './pages/BudgetTracker.jsx'
 import Tracking       from './pages/Tracking.jsx'
 import Profile        from './pages/Profile.jsx'
+import ChatWidget     from './components/ChatWidget'
 
 // Only show Navbar + outlet if logged in
 function PrivateLayout() {
@@ -43,50 +44,53 @@ export default function App() {
   const isAuth = localStorage.getItem('isLoggedIn') === 'true'
 
   return (
-    <Router>
-      <Routes>
-        {/* Public: Landing page (always accessible) */}
-        <Route path="/" element={<Landing />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+    <>
+      <Router>
+        <Routes>
+          {/* Public: Landing page (always accessible) */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* Public: Login / Register (only if not logged in) */}
-        <Route
-          path="/login"
-          element={isAuth ? <Navigate to="/home" replace /> : <Login />}
-        />
-        <Route
-          path="/register"
-          element={isAuth ? <Navigate to="/home" replace /> : <Register />}
-        />
+          {/* Public: Login / Register (only if not logged in) */}
+          <Route
+            path="/login"
+            element={isAuth ? <Navigate to="/home" replace /> : <Login />}
+          />
+          <Route
+            path="/register"
+            element={isAuth ? <Navigate to="/home" replace /> : <Register />}
+          />
 
-        {/* Questionnaire (first‐login flow) */}
-        <Route
-          path="/questionnaire"
-          element={isAuth ? <Questionnaire /> : <Navigate to="/" replace />}
-        />
+          {/* Questionnaire (first‐login flow) */}
+          <Route
+            path="/questionnaire"
+            element={isAuth ? <Questionnaire /> : <Navigate to="/" replace />}
+          />
 
-        {/* Protected: show Navbar + pages */}
-        <Route element={<PrivateLayout />}>
-          <Route path="/home"     element={<Homepage />} />
-          <Route path="/analyzer" element={<Analyzer />} />
-          <Route path="/feedback" element={<Feedback />} />
-          <Route path="/budget"   element={<BudgetTracker />} />
-          <Route path="/history"  element={<Tracking />} />
-          <Route path="/profile"  element={<Profile />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/goal-planning" element={<GoalPlanning />} />
-          <Route path="/reports" element={<ReportsAnalytics />} />
-        </Route>
+          {/* Protected: show Navbar + pages */}
+          <Route element={<PrivateLayout />}>
+            <Route path="/home"     element={<Homepage />} />
+            <Route path="/analyzer" element={<Analyzer />} />
+            <Route path="/feedback" element={<Feedback />} />
+            <Route path="/budget"   element={<BudgetTracker />} />
+            <Route path="/history"  element={<Tracking />} />
+            <Route path="/profile"  element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/goal-planning" element={<GoalPlanning />} />
+            <Route path="/reports" element={<ReportsAnalytics />} />
+          </Route>
 
-        {/* Fallback */}
-        <Route
-          path="*"
-          element={
-            isAuth ? <Navigate to="/home" replace /> : <Navigate to="/" replace />
-          }
-        />
-      </Routes>
-    </Router>
+          {/* Fallback */}
+          <Route
+            path="*"
+            element={
+              isAuth ? <Navigate to="/home" replace /> : <Navigate to="/" replace />
+            }
+          />
+        </Routes>
+      </Router>
+      <ChatWidget />
+    </>
   )
 }

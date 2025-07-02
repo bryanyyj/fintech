@@ -94,6 +94,7 @@ CREATE TABLE user_financial_wellness (
     user_id INT NOT NULL,
     score INT,
     feedback TEXT,
+    detailed_feedback TEXT,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES user(user_id)
 );

@@ -78,16 +78,20 @@ export const getFinancialWellness = (req, res, next) => {
         if (!results || results.length === 0) {
             return res.status(404).json({ message: "No score found for user" });
         }
-        return res.status(200).json(results[0]);
+        return res.status(200).json({
+            score: results[0].score,
+            feedback: results[0].feedback,
+            detailed_feedback: results[0].detailed_feedback
+        });
     });
 };
 
 export const setFinancialWellness = (req, res, next) => {
-    const { userId, score, feedback } = req.body;
+    const { userId, score, feedback, detailedFeedback } = req.body;
     if (!userId || score === undefined || !feedback) {
         return res.status(400).json({ error: "userId, score, and feedback are required" });
     }
-    model.setFinancialWellness(userId, score, feedback, (error, results) => {
+    model.setFinancialWellness(userId, score, feedback, detailedFeedback || feedback, (error, results) => {
         if (error) {
             console.error("Error saving financial wellness score:", error);
             return res.status(500).json({ error: "Internal server error" });

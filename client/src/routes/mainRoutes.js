@@ -9,6 +9,7 @@ import profile from './save_profile.js';
 import spend from './spending.js';
 import password from './password.js';
 import setting from './setting.js';
+import user from './userRoutes.js';
 
 // Controllers and middleware
 import { preTokenGenerate, beforeSendToken, showTokenVerified, preCompare, showCompareSuccess, showHashing } from '../controllers/exampleController.js';
@@ -21,6 +22,7 @@ router.use("/register", register);
 router.use("/analyze-decision", decision)
 router.use("/profile", profile)
 router.use("/", spend)
+router.use("/user", user)
 router.use("/password", password)
 router.use("/settings", setting)
 
