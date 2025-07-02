@@ -50,7 +50,11 @@ export default function Profile() {
   const [profilePicPreview, setProfilePicPreview] = useState(profile.picture || 'https://ui-avatars.com/api/?name=John+Doe&background=6d28d9&color=fff&size=128');
 
   const [aiScore, setAiScore] = useState(null);
-  const [aiFeedback, setAiFeedback] = useState("");
+  const [conciseFeedback, setConciseFeedback] = useState("");
+  const [detailedFeedback, setDetailedFeedback] = useState("");
+  const [showDetailedModal, setShowDetailedModal] = useState(false);
+  const [scoreHistory, setScoreHistory] = useState([]);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [loadingScore, setLoadingScore] = useState(false);
   const [financialInsights, setFinancialInsights] = useState({
     totalIncome: 0,
@@ -65,6 +69,8 @@ export default function Profile() {
 
   const userAvatar = "https://ui-avatars.com/api/?name=User&background=6d28d9&color=fff&size=128";
 
+  const [showScoreModal, setShowScoreModal] = useState(false);
+
   // Always get userId from localStorage and parse as number
   function getUserId() {
     const userId = localStorage.getItem('userId');
@@ -76,13 +82,36 @@ export default function Profile() {
   useEffect(() => {
     const numericUserId = getUserId();
     if (!numericUserId) return;
+    // Fetch user profile
+    fetch(`http://localhost:3000/api/user?userId=${numericUserId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.user_id) {
+          setProfile(p => ({
+            ...p,
+            name: data.full_name || p.name,
+            email: data.email || p.email,
+            // phone and picture are not in your user table, so keep as is or remove
+          }));
+          // If you add a picture field to your user table, handle it here
+          // if (data.picture) setProfilePicPreview(data.picture);
+        }
+      });
     // Fetch recent transactions
     fetch(`http://localhost:3000/api/transactions?userId=${numericUserId}`)
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setTransactions(data);
           setFinancialInsights(calculateFinancialInsights(data));
+        } else {
+          // Fallback to mock data if backend returns no transactions
+          fetch('/mock-transactions.json')
+            .then(res => res.json())
+            .then(mockData => {
+              setTransactions(mockData);
+              setFinancialInsights(calculateFinancialInsights(mockData));
+            });
         }
       });
     // Fetch financial wellness score
@@ -91,7 +120,8 @@ export default function Profile() {
       .then(data => {
         if (data && data.score !== undefined) {
           setAiScore(data.score);
-          setAiFeedback(data.feedback);
+          setConciseFeedback(data.feedback);
+          if (data.detailed_feedback) setDetailedFeedback(data.detailed_feedback);
         }
       });
   }, []);
@@ -218,23 +248,23 @@ export default function Profile() {
   const fetchAndScore = async () => {
     setLoadingScore(true);
     setAiScore(null);
-    setAiFeedback("");
+    setConciseFeedback("");
+    setDetailedFeedback("");
     try {
       const numericUserId = getUserId();
       if (!numericUserId) {
-        setAiFeedback("User ID not found or invalid. Please log in again.");
+        setConciseFeedback("User ID not found or invalid. Please log in again.");
         setLoadingScore(false);
         return;
       }
-      // Use fetch with full URL for consistency
       const txRes = await fetch(`http://localhost:3000/api/transactions?userId=${numericUserId}`);
       const transactions = await txRes.json();
       if (!Array.isArray(transactions)) {
-        setAiFeedback("No transaction array found.");
+        setConciseFeedback("No transaction array found.");
         setLoadingScore(false);
         return;
       }
-      // Call AI backend with full URL
+      // Only one call now, since backend returns both concise and detailed
       const aiRes = await fetch("http://localhost:8000/api/ai/financial-wellness", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -242,17 +272,27 @@ export default function Profile() {
       });
       const aiData = await aiRes.json();
       setAiScore(aiData.score);
-      setAiFeedback(aiData.feedback);
-      // Update financial insights with latest transaction data
-      setFinancialInsights(calculateFinancialInsights(transactions));
-      // Save score to backend
+      setConciseFeedback(aiData.concise);
+      setDetailedFeedback(aiData.detailed);
+      setShowScoreModal(true);
+      setScoreHistory(prev => [
+        {
+          date: new Date().toISOString(),
+          score: aiData.score,
+          concise: aiData.concise,
+          detailed: aiData.detailed
+        },
+        ...prev
+      ]);
+      // Save score to backend as before, but now with detailedFeedback
       await fetch('http://localhost:3000/api/financial-wellness', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: numericUserId, score: aiData.score, feedback: aiData.feedback })
+        body: JSON.stringify({ userId: numericUserId, score: aiData.score, feedback: aiData.concise, detailedFeedback: aiData.detailed })
       });
+      setFinancialInsights(calculateFinancialInsights(transactions));
     } catch (err) {
-      setAiFeedback("Could not calculate score. Please try again later.");
+      setConciseFeedback("Could not calculate score. Please try again later.");
     }
     setLoadingScore(false);
   };
@@ -344,9 +384,22 @@ export default function Profile() {
                         <span className="text-sm text-gray-400">/ 100</span>
                       </div>
                     </div>
-                    <div className="text-center lg:text-left">
-                      <div className="text-purple-300 text-lg font-medium mb-2">{aiFeedback}</div>
-                      <div className="text-gray-400 text-sm">Based on your recent financial activity</div>
+                    <div className="flex flex-col items-start">
+                      <div className="text-purple-200 text-base mb-2">{conciseFeedback}</div>
+                      <div className="flex gap-2">
+                        <button
+                          className="px-4 py-1 bg-purple-700 rounded text-white text-sm hover:bg-purple-800"
+                          onClick={() => setShowDetailedModal(true)}
+                        >
+                          More Info
+                        </button>
+                        <button
+                          className="px-4 py-1 bg-blue-700 rounded text-white text-sm hover:bg-blue-800"
+                          onClick={() => setShowHistoryModal(true)}
+                        >
+                          View History
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -435,14 +488,76 @@ export default function Profile() {
 
         {/* Charts and Trends Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Placeholder for Spending by Category Chart */}
-          <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl p-6 shadow-lg flex items-center justify-center h-72">
-            <span className="text-gray-400 text-xl font-semibold">Graph Placeholder</span>
+          {/* Spending by Category Chart */}
+          <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl p-6 shadow-lg flex flex-col items-center h-72">
+            <h3 className="text-lg font-semibold mb-2 text-center">Spending by Category</h3>
+            <div className="w-full h-full flex items-center justify-center">
+              <Pie
+                data={{
+                  labels: Object.keys(financialInsights.spendingByCategory),
+                  datasets: [
+                    {
+                      data: Object.values(financialInsights.spendingByCategory),
+                      backgroundColor: [
+                        '#6366f1', '#f59e42', '#10b981', '#f43f5e', '#a78bfa', '#fbbf24', '#14b8a6', '#eab308',
+                      ],
+                      borderWidth: 1,
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: 'bottom',
+                      labels: { color: '#d1d5db', font: { size: 12 }, usePointStyle: true },
+                    },
+                  },
+                }}
+              />
+            </div>
           </div>
 
-          {/* Placeholder for Monthly Spending Trend Chart */}
-          <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl p-6 shadow-lg flex items-center justify-center h-72">
-            <span className="text-gray-400 text-xl font-semibold">Graph Placeholder</span>
+          {/* Monthly Spending Trend Chart */}
+          <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl p-6 shadow-lg flex flex-col items-center h-72">
+            <h3 className="text-lg font-semibold mb-2 text-center">Monthly Spending Trend</h3>
+            <div className="w-full h-full flex items-center justify-center">
+              <Line
+                data={{
+                  labels: financialInsights.monthlyTrend.map(item => {
+                    const [year, month] = item.month.split('-');
+                    return `${month}/${year.slice(2)}`;
+                  }),
+                  datasets: [
+                    {
+                      label: 'Spending',
+                      data: financialInsights.monthlyTrend.map(item => item.amount),
+                      fill: false,
+                      borderColor: '#6366f1',
+                      backgroundColor: '#6366f1',
+                      tension: 0.3,
+                      pointRadius: 4,
+                      pointBackgroundColor: '#a78bfa',
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      display: false,
+                      labels: { color: '#d1d5db', font: { size: 12 } },
+                    },
+                  },
+                  scales: {
+                    x: { ticks: { color: '#d1d5db', font: { size: 11 } } },
+                    y: { ticks: { color: '#d1d5db', font: { size: 11 } } },
+                  },
+                }}
+              />
+            </div>
           </div>
         </div>
       </main>
@@ -511,6 +626,106 @@ export default function Profile() {
               >
                 Save Changes
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showScoreModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-gradient-to-br from-purple-900 to-blue-900 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center relative">
+            <button
+              className="absolute top-4 right-4 text-gray-300 hover:text-white"
+              onClick={() => setShowScoreModal(false)}
+            >
+              <X size={28} />
+            </button>
+            <div className="flex flex-col items-center">
+              <div className="relative w-28 h-28 mb-4">
+                <svg width="112" height="112">
+                  <circle cx="56" cy="56" r="48" stroke="#6366f1" strokeWidth="8" fill="none" opacity="0.2" />
+                  <circle
+                    cx="56" cy="56" r="48"
+                    stroke="url(#modal-gradient)"
+                    strokeWidth="8"
+                    fill="none"
+                    strokeDasharray={2 * Math.PI * 48}
+                    strokeDashoffset={2 * Math.PI * 48 * (1 - aiScore / 100)}
+                    strokeLinecap="round"
+                    transform="rotate(-90 56 56)"
+                  />
+                  <defs>
+                    <linearGradient id="modal-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#a78bfa" />
+                      <stop offset="100%" stopColor="#6366f1" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-3xl font-bold text-white">{aiScore}</span>
+                  <span className="text-xs text-gray-400">/ 100</span>
+                </div>
+              </div>
+              <div className="text-purple-200 text-lg font-semibold mb-2">Your Financial Wellness Score</div>
+              <div className="text-white text-base mb-4">{detailedFeedback}</div>
+              <button
+                className="mt-2 px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-bold shadow hover:scale-105 transition"
+                onClick={() => setShowScoreModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDetailedModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-gradient-to-br from-purple-900 to-blue-900 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center relative">
+            <button className="absolute top-4 right-4 text-gray-300 hover:text-white" onClick={() => setShowDetailedModal(false)}>
+              <X size={28} />
+            </button>
+            <div className="text-white text-lg font-bold mb-4">Detailed Feedback</div>
+            <div className="text-white text-base mb-4" style={{ textAlign: "left" }}>
+              {detailedFeedback.split('\n').map((line, idx) => (
+                <p key={idx} style={{ marginBottom: "0.5em" }}>{line}</p>
+              ))}
+            </div>
+            <button className="mt-2 px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-bold shadow hover:scale-105 transition"
+              onClick={() => setShowDetailedModal(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showHistoryModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-2xl shadow-2xl max-w-lg w-full text-center relative">
+            <button className="absolute top-4 right-4 text-gray-300 hover:text-white" onClick={() => setShowHistoryModal(false)}>
+              <X size={28} />
+            </button>
+            <div className="text-white text-lg font-bold mb-4">Score History</div>
+            <div className="max-h-80 overflow-y-auto">
+              {scoreHistory.length === 0 ? (
+                <div className="text-gray-400">No history yet.</div>
+              ) : (
+                <ul>
+                  {scoreHistory.map((item, idx) => (
+                    <li key={idx} className="mb-4 p-4 bg-gray-900/60 rounded-lg text-left">
+                      <div className="font-bold text-purple-300">Score: {item.score}</div>
+                      <div className="text-xs text-gray-400 mb-1">{new Date(item.date).toLocaleString()}</div>
+                      <div className="text-white">{item.concise}</div>
+                      <button
+                        className="mt-1 text-blue-400 underline text-xs"
+                        onClick={() => { setDetailedFeedback(item.detailed); setShowDetailedModal(true); }}
+                      >
+                        View Details
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         </div>

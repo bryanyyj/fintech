@@ -1,9 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import ollama
 from util import remove_think_tags
-from typing import List
+from typing import List, Optional
 import re
 
 MODEL = "deepseek-r1:latest"
@@ -39,6 +39,7 @@ class ChatRequest(BaseModel):
 
 class FinancialWellnessRequest(BaseModel):
     transactions: List[dict]
+    mode: Optional[str] = "concise"  # 'concise' or 'detailed'
 
 @app.post("/chat")
 async def chat_endpoint(req: ChatRequest):
@@ -50,27 +51,63 @@ async def chat_endpoint(req: ChatRequest):
 
 @app.post("/api/ai/financial-wellness")
 async def financial_wellness_endpoint(req: FinancialWellnessRequest):
-    prompt = (
+    import json
+
+    # Concise prompt
+    concise_prompt = (
         "You are a financial wellness AI. Given the user's transaction history below, "
         "analyze their financial wellness and return a JSON with a 'score' (0-100) and a short 'feedback' string. "
         "Be concise and supportive.\n"
         f"Transactions: {req.transactions}\n"
         "Respond ONLY with a JSON object like: {\"score\": 78, \"feedback\": \"Your finances are improving!\"}"
     )
-    result = ollama.generate(model=MODEL, prompt=prompt)
-    response = result["response"]
-    # Try to extract JSON from the response
-    import json
+    concise_result = ollama.generate(model=MODEL, prompt=concise_prompt)
+    concise_response = concise_result["response"]
     try:
-        match = re.search(r'\{.*\}', response, re.DOTALL)
+        match = re.search(r'\{.*\}', concise_response, re.DOTALL)
         if match:
-            data = json.loads(match.group(0))
-            score = data.get("score")
-            feedback = data.get("feedback")
+            concise_data = json.loads(match.group(0))
+            score = concise_data.get("score")
+            concise_feedback = concise_data.get("feedback")
         else:
             score = None
-            feedback = "AI did not return a valid score."
+            concise_feedback = "AI did not return a valid score."
     except Exception:
         score = None
-        feedback = "AI could not process your data."
-    return {"score": score, "feedback": feedback}
+        concise_feedback = "AI could not process your data."
+
+    # Detailed prompt
+    detailed_prompt = (
+        "You are a financial wellness AI. Given the user's transaction history below, "
+        "analyze their financial wellness and return a JSON with a 'score' (0-100) and a 'feedback' string. "
+        "The feedback should be DETAILED and THOROUGH. Include:\n"
+        "- Observations about spending and saving habits\n"
+        "- Notable trends or changes in financial behavior\n"
+        "- Any risks, red flags, or opportunities you notice\n"
+        "- Actionable, specific advice for improvement\n"
+        "- Encouragement and next steps\n"
+        "Be friendly, supportive, and non-judgmental, but provide as much useful information as possible.\n"   
+        "Analyze the following transactions and provide a detailed financial wellness feedback. "
+        "Keep your response concise—no more than 5-7 sentences or about 500 words. "
+        "Avoid excessive detail, and focus on the most important insights and actionable advice.\n\n"
+        f"Transactions: {req.transactions}\n"
+        "Respond ONLY with a JSON object like: {\"score\": 78, \"feedback\": \"[detailed review here]\"}"
+    )
+    detailed_result = ollama.generate(model=MODEL, prompt=detailed_prompt)
+    detailed_response = detailed_result["response"]
+    try:
+        match = re.search(r'\{.*\}', detailed_response, re.DOTALL)
+        if match:
+            detailed_data = json.loads(match.group(0))
+            detailed_feedback = detailed_data.get("feedback")
+            # If detailed_feedback is empty or None, fallback
+            if not detailed_feedback:
+                detailed_feedback = concise_feedback
+    except Exception:
+        detailed_feedback = concise_feedback
+
+    return {
+        "score": score,
+        "concise": concise_feedback,
+        "detailed": detailed_feedback
+    }

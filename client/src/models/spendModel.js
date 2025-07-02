@@ -52,16 +52,16 @@ export const insertTransaction = (data, callback) =>
 
 export const getFinancialWellness = (userId, callback) => {
     const SQLSTATEMENT = `
-        SELECT score, feedback FROM user_financial_wellness WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1;
+        SELECT score, feedback, detailed_feedback FROM user_financial_wellness WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1;
     `;
     pool.query(SQLSTATEMENT, [userId], callback);
 };
 
-export const setFinancialWellness = (userId, score, feedback, callback) => {
+export const setFinancialWellness = (userId, score, feedback, detailedFeedback, callback) => {
     const SQLSTATEMENT = `
-        INSERT INTO user_financial_wellness (user_id, score, feedback)
-        VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE score = VALUES(score), feedback = VALUES(feedback), updated_at = CURRENT_TIMESTAMP;
+        INSERT INTO user_financial_wellness (user_id, score, feedback, detailed_feedback)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE score = VALUES(score), feedback = VALUES(feedback), detailed_feedback = VALUES(detailed_feedback), updated_at = CURRENT_TIMESTAMP;
     `;
-    pool.query(SQLSTATEMENT, [userId, score, feedback], callback);
+    pool.query(SQLSTATEMENT, [userId, score, feedback, detailedFeedback], callback);
 };
